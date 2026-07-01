@@ -106,4 +106,48 @@ const server = http.createServer(async (req, res) => {
       jobs: jobs.filter(j => j.status === "scheduled").length,
     });
   }
-  if (p === "/api/jobs"
+  if (p === "/api/jobs" && req.method === "GET") {
+    if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
+    return send(res, 200, jobs.filter(j => j.status !== "cancelled"));
+  }
+  if (p === "/api/jobs" && req.method === "POST") {
+    if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
+    const b = await readBody(req);
+    if (!b.to || !b.message || !b.fireAt) return send(res, 400, { error: "to, message och fireAt kravs" });
+    if (!/^\+\d{8,15}$/.test(b.to)) return send(res, 400, { error: "Numret maste vara +46701234567-format" });
+    if (isNaN(new Date(b.fireAt).getTime())) return send(res, 400, { error: "Ogiltig tid" });
+    const job = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      to: b.to, message: String(b.message).slice(0, 900), from: b.from || ELKS_FROM,
+      fireAt: new Date(b.fireAt).toISOString(), repeat: b.repeat || "none",
+      status: "scheduled", createdAt: new Date().toISOString(), sentLog: [],
+    };
+    jobs.push(job); saveJobs(jobs); return send(res, 200, job);
+  }
+  if (p.startsWith("/api/jobs/") && req.method === "DELETE") {
+    if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
+    const id = p.split("/").pop();
+    const job = jobs.find(j => j.id === id);
+    if (!job) return send(res, 404, { error: "Hittades inte" });
+    job.status = "cancelled"; saveJobs(jobs); return send(res, 200, { ok: true });
+  }
+  if (p === "/api/test" && req.method === "POST") {
+    if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
+    const b = await readBody(req);
+    if (!b.to || !b.message) return send(res, 400, { error: "to och message kravs" });
+    try { const r = await sendSms(b.to, b.message); return send(res, 200, { ok: true, result: r }); }
+    catch (e) { return send(res, 500, { ok: false, error: String(e.message || e) }); }
+  }
+
+  let file = p === "/" ? "/index.html" : p;
+  const full = path.join(PUBLIC, path.normalize(file).replace(/^(\.\.[/\\])+/, ""));
+  fs.readFile(full, (err, data) => {
+    if (err) { res.writeHead(404); return res.end("Not found"); }
+    res.writeHead(200, { "Content-Type": MIME[path.extname(full)] || "application/octet-stream" });
+    res.end(data);
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Morgon-SMS Auto pa port ${PORT}`);
+});
