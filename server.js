@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import {
   isVideoConfigured, getVideoModel, createVideoJob,
-  listVideoJobs, deleteVideoJob, startVideoPoller,
+  listVideoJobs, deleteVideoJob,
 } from "./video.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -81,7 +81,6 @@ async function tick() {
 }
 setInterval(() => tick().catch(console.error), 20e3);
 tick().catch(console.error);
-startVideoPoller();
 
 function send(res, code, obj) {
   res.writeHead(code, { "Content-Type": "application/json" });
@@ -125,8 +124,6 @@ const server = http.createServer(async (req, res) => {
       const job = await createVideoJob({
         prompt: b.prompt,
         aspectRatio: b.aspectRatio,
-        duration: b.duration,
-        resolution: b.resolution,
         model: b.model,
       });
       return send(res, 200, job);

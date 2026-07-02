@@ -106,15 +106,13 @@
     <details class="adv" id="advBox">
       <summary>Avancerat (valfritt)</summary>
       <div class="inner">
-        <div class="three">
+        <div class="two">
           <div class="field"><label>Bildförhållande</label>
-            <select id="aspect"><option value="">Standard</option><option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option></select></div>
-          <div class="field"><label>Längd (sek)</label>
-            <select id="duration"><option value="">Standard</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></div>
-          <div class="field"><label>Upplösning</label>
-            <select id="resolution"><option value="">Standard</option><option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option></select></div>
+            <select id="aspect"><option value="16:9" selected>16:9 (bred)</option><option value="9:16">9:16 (stående)</option><option value="1:1">1:1 (kvadrat)</option></select></div>
+          <div class="field"><label>Kvalitet</label>
+            <select id="model"><option value="dop-turbo" selected>Turbo (snabbast)</option><option value="dop-lite">Lite (billigast)</option><option value="dop-standard">Standard (bäst kvalitet)</option></select></div>
         </div>
-        <div class="hint">Lämna som "Standard" om du är osäker — inte alla AI-modeller stödjer alla val, och ett fel visas i så fall under videon.</div>
+        <div class="hint">Higgsfield skapar först en AI-bild från prompten och animerar sedan bilden till en video — därför tar det ett par minuter per video.</div>
       </div>
     </details>
 
@@ -200,10 +198,10 @@
     dot.classList.toggle("on", !!s.videoConfigured);
     if(s.videoConfigured){
       box.className="status";
-      box.innerHTML=`Ansluten. Modell: <b>${escapeHtml(s.videoModel||"okänd")}</b>`;
+      box.innerHTML=`Ansluten. <b>${escapeHtml(s.videoModel||"okänd")}</b>`;
     } else {
       box.className="status bad";
-      box.innerHTML=`<b>AI-video ej konfigurerad.</b> Sätt miljövariabeln <b>REPLICATE_API_TOKEN</b> på servern för att kunna generera videor.`;
+      box.innerHTML=`<b>AI-video ej konfigurerad.</b> Sätt miljövariabeln <b>HF_CREDENTIALS</b> (Higgsfield "KEY_ID:KEY_SECRET") på servern för att kunna generera videor.`;
     }
     return s;
   }
@@ -217,14 +215,15 @@
     if(s<3600) return Math.round(s/60)+"m sedan";
     return d.toLocaleString("sv-SE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
   }
-  const STATUS_LABEL={ starting:"Startar…", processing:"Genererar…", succeeded:"Klar", failed:"Misslyckades", canceled:"Avbruten" };
+  const STATUS_LABEL={ queued:"I kö…", generating_image:"Skapar AI-bild…", generating_video:"Animerar video…", succeeded:"Klar", failed:"Misslyckades" };
+  const PENDING_STATUSES=new Set(["queued","generating_image","generating_video"]);
 
   function renderItem(job){
     const div=document.createElement("div");
     div.className="item";
-    const pending = job.status==="starting" || job.status==="processing";
+    const pending = PENDING_STATUSES.has(job.status);
     const ok = job.status==="succeeded" && job.videoUrl;
-    const failed = job.status==="failed" || job.status==="canceled" || (job.status==="succeeded" && !job.videoUrl);
+    const failed = job.status==="failed" || (job.status==="succeeded" && !job.videoUrl);
 
     let badgeCls="pending"; if(ok) badgeCls="ok"; else if(failed) badgeCls="err";
     let html = `<div class="top">
@@ -234,7 +233,7 @@
     <div class="prompt">${escapeHtml(job.prompt)}</div>`;
 
     if(pending){
-      html += `<div class="spin"><span class="spinner"></span> AI:n jobbar på videon — detta kan ta någon minut…</div>`;
+      html += `<div class="spin"><span class="spinner"></span> ${STATUS_LABEL[job.status]||"Arbetar…"} (tar oftast 1-3 minuter)</div>`;
     } else if(ok){
       html += `<video controls preload="metadata" src="${escapeHtml(job.videoUrl)}"></video>`;
     } else if(failed){
@@ -243,7 +242,7 @@
 
     html += `<div class="acts">`;
     if(ok) html += `<a href="${escapeHtml(job.videoUrl)}" download target="_blank" rel="noopener">Ladda ner</a>`;
-    html += `<button data-del="${job.id}">${pending?"Avbryt":"Ta bort"}</button>`;
+    html += `<button data-del="${job.id}">Ta bort</button>`;
     html += `</div>`;
     div.innerHTML=html;
     return div;
@@ -268,7 +267,7 @@
       });
     });
 
-    schedulePoll(items.some(j=>j.status==="starting"||j.status==="processing"));
+    schedulePoll(items.some(j=>PENDING_STATUSES.has(j.status)));
   }
 
   function schedulePoll(active){
@@ -285,8 +284,7 @@
       const body={
         prompt,
         aspectRatio: $("#aspect").value || undefined,
-        duration: $("#duration").value || undefined,
-        resolution: $("#resolution").value || undefined,
+        model: $("#model").value || undefined,
       };
       await api("/api/video/generate",{method:"POST",body:JSON.stringify(body)});
       toast("Video-generering startad!");
@@ -300,7 +298,7 @@
     }
   });
 
-  $("#foot").textContent = "Morgon-SMS · AI-video drivs av Replicate";
+  $("#foot").textContent = "Morgon-SMS · AI-video drivs av Higgsfield";
 
   (async function init(){
     try{
