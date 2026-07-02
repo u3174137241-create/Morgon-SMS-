@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AI-Video">
+<title>AI-Video · Morgon-SMS</title>
+<style>
+  :root{--bg:#0a0e14;--ink:#f2efe6;--dim:#7d8694;--line:#1c2530;--card:#111823;--amber:#ffb347;--amber-deep:#e8892b;--green:#3ddc84;--red:#ff5c5c;--blue:#5b9dff}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
+  body{padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 20px);min-height:100vh}
+  .wrap{max-width:560px;margin:0 auto;padding:0 18px}
+  header{padding:24px 0 12px}
+  .navrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .navrow a{color:var(--dim);font-size:13px;text-decoration:none;border:1px solid var(--line);padding:6px 12px;border-radius:20px}
+  .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red)}
+  .dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+  h1{font-size:29px;font-weight:800;letter-spacing:-.02em}
+  .sub{color:var(--dim);font-size:14px;margin-top:8px;line-height:1.5}
+  .status{margin:6px 0 18px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;font-size:13px;color:var(--dim);line-height:1.5;background:linear-gradient(135deg,#141c28,#0d131c)}
+  .status b{color:var(--ink)}
+  .status.bad{border-color:#3a2230;background:#170f14}.status.bad b{color:var(--red)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);font-weight:700;margin-bottom:14px}
+  label{display:block;font-size:13px;color:var(--dim);margin:0 0 6px;font-weight:600}
+  input,textarea,select{width:100%;background:#0b111a;border:1px solid var(--line);border-radius:11px;color:var(--ink);padding:13px;font-size:16px;font-family:inherit;outline:none;transition:border-color .15s}
+  input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+  textarea{resize:vertical;min-height:110px;line-height:1.45}
+  .field{margin-bottom:14px}.two{display:flex;gap:12px}.two .field{flex:1}
+  .three{display:flex;gap:10px}.three .field{flex:1}
+  .count{text-align:right;font-size:11px;color:var(--dim);margin-top:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .chip{background:#0b111a;border:1px solid var(--line);border-radius:20px;padding:8px 13px;font-size:13px;color:var(--dim);cursor:pointer;transition:all .15s}
+  .chip:active{transform:scale(.95)}
+  .chip.on{background:var(--amber);color:#1a1206;border-color:var(--amber);font-weight:700}
+  details.adv{margin-bottom:14px;border:1px solid var(--line);border-radius:12px;padding:2px 14px}
+  details.adv summary{cursor:pointer;padding:11px 0;font-size:13px;font-weight:700;color:var(--dim);list-style:none}
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv[open] summary{color:var(--ink)}
+  details.adv .inner{padding-bottom:12px}
+  .hint{font-size:12px;color:var(--dim);margin-top:-6px;margin-bottom:14px;line-height:1.5}
+  .btn{border:none;border-radius:14px;font-size:15px;font-weight:700;padding:15px;width:100%;cursor:pointer;transition:transform .08s;font-family:inherit}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+  .btn-primary{background:linear-gradient(135deg,var(--amber),var(--amber-deep));color:#1a1206}
+  .btn-ghost{background:#0b111a;color:var(--ink);border:1px solid var(--line)}
+  .list-head{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 12px}
+  .list-head h2{font-size:16px;font-weight:800}.list-head .n{color:var(--dim);font-size:13px}
+  .empty{text-align:center;color:var(--dim);padding:32px 20px;font-size:14px;line-height:1.6;border:1px dashed var(--line);border-radius:16px}
+  .empty .em{font-size:30px;display:block;margin-bottom:8px}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin-bottom:11px;position:relative;overflow:hidden}
+  .item .top{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+  .item .badge2{font-size:11px;font-weight:800;letter-spacing:.04em;padding:4px 10px;border-radius:20px;text-transform:uppercase}
+  .badge2.pending{background:#1c1509;color:var(--amber)}
+  .badge2.ok{background:#08201a;color:var(--green)}
+  .badge2.err{background:#22111a;color:var(--red)}
+  .item .when{font-size:11px;color:var(--dim);margin-left:auto}
+  .item .prompt{font-size:14px;color:#c9d1dc;line-height:1.45;background:#0b111a;border-radius:10px;padding:10px 12px;margin-bottom:11px;white-space:pre-wrap;word-break:break-word}
+  .item video{width:100%;border-radius:12px;background:#000;margin-bottom:11px;display:block}
+  .item .err-msg{font-size:13px;color:var(--red);background:#170f14;border:1px solid #3a2230;border-radius:10px;padding:10px 12px;margin-bottom:11px}
+  .item .spin{display:flex;align-items:center;gap:10px;color:var(--dim);font-size:13px;background:#0b111a;border-radius:10px;padding:12px;margin-bottom:11px}
+  .spinner{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--amber);animation:spin .8s linear infinite;flex:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .item .acts{display:flex;gap:8px}
+  .item .acts a,.item .acts button{border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--dim);border:1px solid var(--line);text-decoration:none;text-align:center;flex:1}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120px);background:#1a2432;border:1px solid var(--line);color:var(--ink);padding:13px 20px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.2,.9,.3,1.3);z-index:100;max-width:90%;text-align:center}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  .lock{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px;gap:14px}
+  .lock.hidden{display:none}.lock h2{font-size:22px}.lock p{color:var(--dim);font-size:14px;text-align:center;max-width:320px}.lock input{max-width:280px;text-align:center}
+  .foot{text-align:center;color:#4a5361;font-size:11px;line-height:1.6;margin-top:26px;padding:0 10px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="lock" id="lock">
+  <div style="font-size:40px">🔒</div>
+  <h2>AI-Video</h2>
+  <p>Ange lösenordet för att fortsätta.</p>
+  <input id="pw" type="password" placeholder="Lösenord" autocomplete="current-password">
+  <button class="btn btn-primary" style="max-width:280px" id="unlock">Lås upp</button>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="navrow"><a href="/">← SMS</a><span></span></div>
+    <div class="kicker"><span class="dot" id="sdot"></span> AI-video · text till video</div>
+    <h1>🎬 AI-Video</h1>
+    <p class="sub">Skriv in en prompt — eller vilken text som helst — och servern genererar en video åt dig med AI.</p>
+  </header>
+  <div class="status" id="status">Kontrollerar server…</div>
+
+  <div class="card">
+    <h2>Ny video</h2>
+    <div class="field">
+      <label>Prompt</label>
+      <textarea id="prompt" maxlength="1500" placeholder="T.ex: En drönarbild över ett svenskt skogslandskap i höstfärger, gyllene morgonljus, filmisk stil"></textarea>
+      <div class="count" id="count">0 / 1500 tecken</div>
+    </div>
+    <label>Snabbstilar (klick lägger till i prompten)</label>
+    <div class="chips" id="styles"></div>
+
+    <details class="adv" id="advBox">
+      <summary>Avancerat (valfritt)</summary>
+      <div class="inner">
+        <div class="three">
+          <div class="field"><label>Bildförhållande</label>
+            <select id="aspect"><option value="">Standard</option><option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option></select></div>
+          <div class="field"><label>Längd (sek)</label>
+            <select id="duration"><option value="">Standard</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></div>
+          <div class="field"><label>Upplösning</label>
+            <select id="resolution"><option value="">Standard</option><option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option></select></div>
+        </div>
+        <div class="hint">Lämna som "Standard" om du är osäker — inte alla AI-modeller stödjer alla val, och ett fel visas i så fall under videon.</div>
+      </div>
+    </details>
+
+    <button class="btn btn-primary" id="gen">Generera video</button>
+  </div>
+
+  <div class="list-head"><h2>Dina videor</h2><span class="n" id="listCount"></span></div>
+  <div id="list"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<div id="toast"></div>
+<script>
+(function(){
+  "use strict";
+  const $=s=>document.querySelector(s);
+  let PW=localStorage.getItem("msms_pw")||"";
+  const STYLES=[
+    "cinematisk, filmkamera",
+    "fotorealistisk",
+    "anime-stil",
+    "tidsraffel",
+    "drönarvy uppifrån",
+    "varmt gyllene ljus"
+  ];
+  const POLL_MS=5000;
+  let pollTimer=null;
+
+  function toast(msg){
+    const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600);
+  }
+  function headers(json){
+    const h={}; if(json) h["Content-Type"]="application/json"; if(PW) h["x-app-password"]=PW; return h;
+  }
+  async function api(path,opts={}){
+    const r=await fetch(path,{...opts,headers:{...headers(!!opts.body),...(opts.headers||{})}});
+    let data=null; try{ data=await r.json(); }catch{ data=null; }
+    if(r.status===401){ showLock(); throw new Error("Fel lösenord"); }
+    if(!r.ok) throw new Error((data&&data.error)||("HTTP "+r.status));
+    return data;
+  }
+
+  function showLock(){ $("#lock").classList.remove("hidden"); }
+  function hideLock(){ $("#lock").classList.add("hidden"); }
+
+  $("#unlock").addEventListener("click", async ()=>{
+    const v=$("#pw").value.trim();
+    PW=v; localStorage.setItem("msms_pw",v);
+    try{ await refreshStatus(); await refreshList(); hideLock(); }
+    catch(e){ toast(e.message||"Kunde inte logga in"); }
+  });
+  $("#pw").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#unlock").click(); });
+
+  // --- Stil-chips: lägg till/ta bort korta stiltillägg i prompten ---
+  const stylesBox=$("#styles");
+  STYLES.forEach(s=>{
+    const chip=document.createElement("div");
+    chip.className="chip"; chip.textContent=s; chip.dataset.style=s;
+    chip.addEventListener("click", ()=>{
+      const ta=$("#prompt");
+      const has=chip.classList.contains("on");
+      if(has){
+        ta.value = ta.value.split(", ").filter(part=>part.trim()!==s).join(", ");
+        chip.classList.remove("on");
+      } else {
+        ta.value = ta.value.trim() ? (ta.value.trim().replace(/,\s*$/,"") + ", " + s) : s;
+        chip.classList.add("on");
+      }
+      updateCount();
+    });
+    stylesBox.appendChild(chip);
+  });
+
+  function updateCount(){
+    const ta=$("#prompt");
+    $("#count").textContent = ta.value.length + " / 1500 tecken";
+  }
+  $("#prompt").addEventListener("input", updateCount);
+
+  async function refreshStatus(){
+    const s=await api("/api/health");
+    const dot=$("#sdot"); const box=$("#status");
+    dot.classList.toggle("on", !!s.videoConfigured);
+    if(s.videoConfigured){
+      box.className="status";
+      box.innerHTML=`Ansluten. Modell: <b>${escapeHtml(s.videoModel||"okänd")}</b>`;
+    } else {
+      box.className="status bad";
+      box.innerHTML=`<b>AI-video ej konfigurerad.</b> Sätt miljövariabeln <b>REPLICATE_API_TOKEN</b> på servern för att kunna generera videor.`;
+    }
+    return s;
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function timeAgo(iso){
+    const d=new Date(iso); const s=Math.round((Date.now()-d.getTime())/1000);
+    if(s<60) return s+"s sedan";
+    if(s<3600) return Math.round(s/60)+"m sedan";
+    return d.toLocaleString("sv-SE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  }
+  const STATUS_LABEL={ starting:"Startar…", processing:"Genererar…", succeeded:"Klar", failed:"Misslyckades", canceled:"Avbruten" };
+
+  function renderItem(job){
+    const div=document.createElement("div");
+    div.className="item";
+    const pending = job.status==="starting" || job.status==="processing";
+    const ok = job.status==="succeeded" && job.videoUrl;
+    const failed = job.status==="failed" || job.status==="canceled" || (job.status==="succeeded" && !job.videoUrl);
+
+    let badgeCls="pending"; if(ok) badgeCls="ok"; else if(failed) badgeCls="err";
+    let html = `<div class="top">
+      <span class="badge2 ${badgeCls}">${STATUS_LABEL[job.status]||job.status}</span>
+      <span class="when">${timeAgo(job.createdAt)}</span>
+    </div>
+    <div class="prompt">${escapeHtml(job.prompt)}</div>`;
+
+    if(pending){
+      html += `<div class="spin"><span class="spinner"></span> AI:n jobbar på videon — detta kan ta någon minut…</div>`;
+    } else if(ok){
+      html += `<video controls preload="metadata" src="${escapeHtml(job.videoUrl)}"></video>`;
+    } else if(failed){
+      html += `<div class="err-msg">${escapeHtml(job.error||"Okänt fel vid generering.")}</div>`;
+    }
+
+    html += `<div class="acts">`;
+    if(ok) html += `<a href="${escapeHtml(job.videoUrl)}" download target="_blank" rel="noopener">Ladda ner</a>`;
+    html += `<button data-del="${job.id}">${pending?"Avbryt":"Ta bort"}</button>`;
+    html += `</div>`;
+    div.innerHTML=html;
+    return div;
+  }
+
+  async function refreshList(){
+    const items=await api("/api/video/jobs");
+    const list=$("#list");
+    $("#listCount").textContent = items.length ? items.length+" st" : "";
+    list.innerHTML="";
+    if(!items.length){
+      list.innerHTML = `<div class="empty"><span class="em">🎥</span>Inga videor än.<br>Skriv en prompt ovan och tryck på "Generera video".</div>`;
+      return;
+    }
+    for(const job of items) list.appendChild(renderItem(job));
+
+    list.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        btn.disabled=true;
+        try{ await api("/api/video/jobs/"+btn.dataset.del,{method:"DELETE"}); await refreshList(); toast("Borttagen"); }
+        catch(e){ toast(e.message); btn.disabled=false; }
+      });
+    });
+
+    schedulePoll(items.some(j=>j.status==="starting"||j.status==="processing"));
+  }
+
+  function schedulePoll(active){
+    clearTimeout(pollTimer);
+    if(active) pollTimer=setTimeout(()=>refreshList().catch(()=>{}), POLL_MS);
+  }
+
+  $("#gen").addEventListener("click", async ()=>{
+    const prompt=$("#prompt").value.trim();
+    if(!prompt){ toast("Skriv en prompt först"); return; }
+    const btn=$("#gen");
+    btn.disabled=true; btn.textContent="Skickar…";
+    try{
+      const body={
+        prompt,
+        aspectRatio: $("#aspect").value || undefined,
+        duration: $("#duration").value || undefined,
+        resolution: $("#resolution").value || undefined,
+      };
+      await api("/api/video/generate",{method:"POST",body:JSON.stringify(body)});
+      toast("Video-generering startad!");
+      $("#prompt").value=""; updateCount();
+      stylesBox.querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));
+      await refreshList();
+    } catch(e){
+      toast(e.message||"Något gick fel");
+    } finally {
+      btn.disabled=false; btn.textContent="Generera video";
+    }
+  });
+
+  $("#foot").textContent = "Morgon-SMS · AI-video drivs av Replicate";
+
+  (async function init(){
+    try{
+      await refreshStatus();
+      await refreshList();
+      hideLock();
+    }catch(e){
+      showLock();
+    }
+  })();
+})();
+</script>
+</body>
+</html>

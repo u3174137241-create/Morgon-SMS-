@@ -2,6 +2,10 @@ import http from "http";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  isVideoConfigured, getVideoModel, createVideoJob,
+  listVideoJobs, deleteVideoJob, startVideoPoller,
+} from "./video.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, "jobs.json");
@@ -77,6 +81,7 @@ async function tick() {
 }
 setInterval(() => tick().catch(console.error), 20e3);
 tick().catch(console.error);
+startVideoPoller();
 
 function send(res, code, obj) {
   res.writeHead(code, { "Content-Type": "application/json" });
@@ -104,7 +109,37 @@ const server = http.createServer(async (req, res) => {
       from: ELKS_FROM,
       protected: Boolean(APP_PASSWORD),
       jobs: jobs.filter(j => j.status === "scheduled").length,
+      videoConfigured: isVideoConfigured(),
+      videoModel: getVideoModel(),
     });
+  }
+
+  if (p === "/api/video/jobs" && req.method === "GET") {
+    if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
+    return send(res, 200, listVideoJobs());
+  }
+  if (p === "/api/video/generate" && req.method === "POST") {
+    if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
+    const b = await readBody(req);
+    try {
+      const job = await createVideoJob({
+        prompt: b.prompt,
+        aspectRatio: b.aspectRatio,
+        duration: b.duration,
+        resolution: b.resolution,
+        model: b.model,
+      });
+      return send(res, 200, job);
+    } catch (e) {
+      return send(res, 400, { error: String(e.message || e) });
+    }
+  }
+  if (p.startsWith("/api/video/jobs/") && req.method === "DELETE") {
+    if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
+    const id = p.split("/").pop();
+    const ok = await deleteVideoJob(id);
+    if (!ok) return send(res, 404, { error: "Hittades inte" });
+    return send(res, 200, { ok: true });
   }
   if (p === "/api/jobs" && req.method === "GET") {
     if (!authOK(req)) return send(res, 401, { error: "Fel losenord" });
