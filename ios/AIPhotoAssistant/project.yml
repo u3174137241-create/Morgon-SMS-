@@ -1,0 +1,54 @@
+name: AIPhotoAssistant
+options:
+  bundleIdPrefix: com.morgon
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    ENABLE_PREVIEWS: YES
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+targets:
+  AIPhotoAssistant:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: App
+      - path: Chat
+      - path: PhotoLibrary
+      - path: PhotoMetadata
+      - path: LocationDetection
+      - path: PhotoAnalysis
+      - path: AIIntentParsing
+      - path: AlbumGeneration
+      - path: AlbumEditor
+      - path: Export
+      - path: LocalStorage
+      - path: Settings
+      - path: Shared
+      - path: Resources
+    info:
+      path: App/Info.plist
+    entitlements:
+      path: App/AIPhotoAssistant.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.morgon.aiphotoassistant
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_EMIT_LOC_STRINGS: YES
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+schemes:
+  AIPhotoAssistant:
+    build:
+      targets:
+        AIPhotoAssistant: all
+    run:
+      config: Debug
+    archive:
+      config: Release
