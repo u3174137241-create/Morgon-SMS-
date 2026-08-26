@@ -11,7 +11,7 @@ struct AlbumEditorView: View {
 
     private let gridColumns = [GridItem(.adaptive(minimum: 100), spacing: 4)]
 
-    init(album: Album, albumStore: AlbumStore, onSave: @escaping (Album) -> Void) {
+    init(album: Album, onSave: @escaping (Album) -> Void) {
         _viewModel = StateObject(wrappedValue: AlbumEditorViewModel(album: album, onSave: onSave))
     }
 

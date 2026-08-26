@@ -41,7 +41,7 @@ struct ChatView: View {
                 SettingsView(authManager: viewModel.authManager, albumStore: viewModel.albumStore)
             }
             .navigationDestination(item: $editingAlbum) { album in
-                AlbumEditorView(album: album, albumStore: viewModel.albumStore) { updated in
+                AlbumEditorView(album: album) { updated in
                     viewModel.activeAlbum = updated
                     viewModel.albumStore.save(updated)
                 }

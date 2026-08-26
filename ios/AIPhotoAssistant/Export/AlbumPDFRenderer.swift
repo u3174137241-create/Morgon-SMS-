@@ -59,11 +59,9 @@ enum AlbumPDFRenderer {
         ]
 
         let titleSize = album.title.size(withAttributes: titleAttrs)
-        let subtitleSize = album.subtitle.size(withAttributes: subtitleAttrs)
         let titleY = bounds.height - 140
         album.title.draw(at: CGPoint(x: 40, y: titleY), withAttributes: titleAttrs)
         album.subtitle.draw(at: CGPoint(x: 40, y: titleY + titleSize.height + 8), withAttributes: subtitleAttrs)
-        _ = subtitleSize
     }
 
     private static func gridCapacity(for style: AlbumStyle) -> Int {

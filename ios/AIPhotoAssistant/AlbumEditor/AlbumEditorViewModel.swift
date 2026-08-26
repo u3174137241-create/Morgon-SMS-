@@ -109,7 +109,10 @@ final class AlbumEditorViewModel: ObservableObject {
     }
 
     private func removeWorst(count: Int) async {
-        guard album.photoCount > count else { return }
+        guard album.photoCount > count else {
+            statusMessage = "Albumet har för få bilder för att ta bort fler."
+            return
+        }
         let assets = PhotoLibraryService.shared.assets(for: album.photoIDs)
         var scored: [(id: String, score: Double)] = []
         for asset in assets {

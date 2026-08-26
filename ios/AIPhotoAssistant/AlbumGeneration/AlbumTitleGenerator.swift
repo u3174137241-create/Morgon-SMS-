@@ -25,7 +25,8 @@ enum AlbumTitleGenerator {
 
         switch style {
         case .minimal, .luxury:
-            let title = place?.displayName.uppercased() ?? place?.country?.uppercased() ?? "ALBUM"
+            let placeTitle = place.flatMap { $0.displayName.isEmpty ? nil : $0.displayName.uppercased() }
+            let title = placeTitle ?? place?.country?.uppercased() ?? "ALBUM"
             return (title, dateText)
         case .romantic:
             let title = place != nil ? "Vår resa till \(place!.displayName)" : "Vår historia"

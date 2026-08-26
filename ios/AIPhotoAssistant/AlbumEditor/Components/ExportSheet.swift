@@ -11,7 +11,7 @@ struct ExportSheet: View {
     @State private var showShare = false
     @State private var pdfData: Data?
     @State private var showPDFExporter = false
-    @State private var pngData: Data?
+    @State private var pngDocuments: [PNGFileDocument] = []
     @State private var showPNGExporter = false
 
     var body: some View {
@@ -61,7 +61,7 @@ struct ExportSheet: View {
                 if let shareItems { ShareSheet(items: shareItems) }
             }
             .fileExporter(isPresented: $showPDFExporter, document: pdfData.map(PDFFileDocument.init), contentType: .pdf, defaultFilename: album.title) { _ in }
-            .fileExporter(isPresented: $showPNGExporter, document: pngData.map(PNGFileDocument.init), contentType: .png, defaultFilename: album.title) { _ in }
+            .fileExporter(isPresented: $showPNGExporter, documents: pngDocuments, contentType: .png) { _ in }
         }
     }
 
@@ -91,11 +91,12 @@ struct ExportSheet: View {
         isWorking = true
         defer { isWorking = false }
         let images = await ExportService.renderPageImages(for: album)
-        guard let first = images.first, let data = first.pngData() else {
+        let documents = images.compactMap { $0.pngData() }.map(PNGFileDocument.init)
+        guard !documents.isEmpty else {
             statusText = "Kunde inte skapa bilder."
             return
         }
-        pngData = data
+        pngDocuments = documents
         showPNGExporter = true
     }
 

@@ -84,14 +84,12 @@ final class ChatViewModel: ObservableObject {
     private func runGeneration(intent: UserIntent) async {
         var lastStage: PipelineStage = .idle
         let outcome = await AlbumGenerator.generate(from: intent) { [weak self] stage, detail in
-            Task { @MainActor in
-                guard let self else { return }
-                self.pipelineStage = stage
-                self.pipelineDetail = detail
-                if stage != lastStage {
-                    lastStage = stage
-                    self.appendProgressMessage(for: stage, detail: detail)
-                }
+            guard let self else { return }
+            self.pipelineStage = stage
+            self.pipelineDetail = detail
+            if stage != lastStage {
+                lastStage = stage
+                self.appendProgressMessage(for: stage, detail: detail)
             }
         }
 
@@ -123,14 +121,12 @@ final class ChatViewModel: ObservableObject {
         }
         var lastStage: PipelineStage = .idle
         let outcome = await AlbumGenerator.regenerate(previous: current, overrideStyle: overrideStyle, overrideCount: overrideCount) { [weak self] stage, detail in
-            Task { @MainActor in
-                guard let self else { return }
-                self.pipelineStage = stage
-                self.pipelineDetail = detail
-                if stage != lastStage {
-                    lastStage = stage
-                    self.appendProgressMessage(for: stage, detail: detail)
-                }
+            guard let self else { return }
+            self.pipelineStage = stage
+            self.pipelineDetail = detail
+            if stage != lastStage {
+                lastStage = stage
+                self.appendProgressMessage(for: stage, detail: detail)
             }
         }
         guard let album = outcome.album else {
@@ -243,7 +239,6 @@ final class ChatViewModel: ObservableObject {
         let status = await authManager.requestAccessIfNeeded()
         guard status == .authorized || status == .limited else {
             messages.append(ChatMessage(role: .assistant, text: "Jag behöver åtkomst till dina bilder för att kunna hjälpa dig. Gå till Inställningar för att ge appen behörighet."))
-            isProcessing = false
             return false
         }
         return true

@@ -35,18 +35,15 @@ func mapConcurrently<Input: Sendable, Output: Sendable>(
     return results.compactMap { $0 }
 }
 
-/// Cooperative progress reporter that can be observed from SwiftUI without
-/// each pipeline stage needing to know about the view layer.
-@MainActor
-final class ProgressReporter: ObservableObject {
-    @Published private(set) var stage: PipelineStage = .idle
-    @Published private(set) var detail: String = ""
-
-    func update(_ stage: PipelineStage, detail: String = "") {
-        self.stage = stage
-        self.detail = detail
-    }
-}
+/// Progress callback shared by every stage of the album-generation
+/// pipeline. It's `@MainActor`-isolated so callers (the chat/editor view
+/// models) can mutate `@Published` UI state directly inside it, and every
+/// pipeline call site `await`s it — that await is a real suspension point
+/// in the pipeline's own linear control flow, which is what guarantees
+/// stage updates arrive on the main actor in the exact order the pipeline
+/// produced them (as opposed to each call spawning its own detached
+/// `Task`, which would only be *likely*, not guaranteed, to preserve order).
+typealias ProgressHandler = @MainActor @Sendable (PipelineStage, String) -> Void
 
 enum PipelineStage: Int, CaseIterable {
     case idle

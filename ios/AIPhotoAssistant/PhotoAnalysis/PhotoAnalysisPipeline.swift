@@ -15,15 +15,15 @@ struct AnalyzedLibrary: Sendable {
 enum PhotoAnalysisPipeline {
     static func run(
         assets: [PHAsset],
-        onProgress: @escaping @Sendable (PipelineStage, String) -> Void = { _, _ in }
+        onProgress: @escaping ProgressHandler = { _, _ in }
     ) async -> AnalyzedLibrary {
-        onProgress(.finding, "\(assets.count) bilder hittade")
+        await onProgress(.finding, "\(assets.count) bilder hittade")
         let metadataList = PhotoMetadataExtractor.extract(from: assets)
 
         let locations = metadataList.compactMap(\.location)
         let placesByLocationKey = await LocationResolver.shared.resolveBatch(locations)
 
-        onProgress(.analyzing, "Analyserar bildkvalitet och innehåll")
+        await onProgress(.analyzing, "Analyserar bildkvalitet och innehåll")
         let duplicateDetector = DuplicateDetector()
         let library = PhotoLibraryService.shared
 

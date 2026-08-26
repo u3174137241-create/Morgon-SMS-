@@ -11,8 +11,8 @@ enum PhotoFinder {
     /// unbounded on-device Vision run. Prioritizes favorites and recency.
     static let maxCandidates = 500
 
-    static func findCandidates(filters: PhotoFilters, onProgress: @escaping @Sendable (PipelineStage, String) -> Void = { _, _ in }) async -> [PHAsset] {
-        onProgress(.finding, "Söker i bildbiblioteket")
+    static func findCandidates(filters: PhotoFilters, onProgress: @escaping ProgressHandler = { _, _ in }) async -> [PHAsset] {
+        await onProgress(.finding, "Söker i bildbiblioteket")
         let allAssets = PhotoLibraryService.shared.fetchAllAssets()
         var pairs: [(asset: PHAsset, metadata: PhotoMetadata)] = allAssets.map { ($0, PhotoMetadataExtractor.extract(from: $0)) }
 
@@ -47,10 +47,10 @@ enum PhotoFinder {
     private static func filterByLocation(
         _ pairs: [(asset: PHAsset, metadata: PhotoMetadata)],
         phrase: String,
-        onProgress: @escaping @Sendable (PipelineStage, String) -> Void
+        onProgress: @escaping ProgressHandler
     ) async -> [(asset: PHAsset, metadata: PhotoMetadata)] {
         guard let match = await PlaceQuery.resolve(phrase) else { return pairs }
-        onProgress(.finding, "Letar efter bilder från \(match.displayName)")
+        await onProgress(.finding, "Letar efter bilder från \(match.displayName)")
 
         let withLocation = pairs.filter { $0.metadata.location != nil }
         let places = await LocationResolver.shared.resolveBatch(withLocation.map { $0.metadata.location! })
@@ -65,9 +65,9 @@ enum PhotoFinder {
     private static func filterByTripClustering(
         _ pairs: [(asset: PHAsset, metadata: PhotoMetadata)],
         preferredDateRange: ParsedDateRange?,
-        onProgress: @escaping @Sendable (PipelineStage, String) -> Void
+        onProgress: @escaping ProgressHandler
     ) async -> [(asset: PHAsset, metadata: PhotoMetadata)] {
-        onProgress(.finding, "Identifierar resor och semestrar")
+        await onProgress(.finding, "Identifierar resor och semestrar")
         let withLocation = pairs.filter { $0.metadata.location != nil }
         guard !withLocation.isEmpty else { return pairs }
 
