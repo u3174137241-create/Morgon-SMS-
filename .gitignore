@@ -1,4 +1,19 @@
 node_modules/
+.expo/
+dist/
+web-build/
 .env
-jobs.json
-videos.json
+.env.local
+*.log
+.DS_Store
+ios/
+android/
+*.pem
+.metro-health-check*
+expo-env.d.ts
+
+# legacy sms tool
+legacy/morgon-sms/node_modules/
+legacy/morgon-sms/.env
+legacy/morgon-sms/jobs.json
+legacy/morgon-sms/videos.json

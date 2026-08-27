@@ -1,0 +1,4 @@
+project_id = "bilkoll"
+
+[functions.analyze-car]
+verify_jwt = true

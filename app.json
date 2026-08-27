@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Bilkoll",
+    "slug": "bilkoll",
+    "scheme": "bilkoll",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAFAF9"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "se.bilkoll.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Bilkoll behöver kameran för att du ska kunna fotografera en bilannons eller bilder på bilen.",
+        "NSPhotoLibraryUsageDescription": "Bilkoll behöver tillgång till dina bilder för att du ska kunna ladda upp skärmdumpar eller foton av en bilannons."
+      }
+    },
+    "android": {
+      "package": "se.bilkoll.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FAFAF9"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bilkoll behöver tillgång till dina bilder för att du ska kunna ladda upp skärmdumpar eller foton av en bilannons."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FAFAF9",
+          "image": "./assets/splash.png",
+          "imageWidth": 180
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "supabaseUrl": "https://YOUR-PROJECT.supabase.co",
+      "supabaseAnonKey": "YOUR_SUPABASE_ANON_KEY"
+    }
+  }
+}
