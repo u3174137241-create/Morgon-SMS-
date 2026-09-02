@@ -1,0 +1,27 @@
+{
+  "name": "ai-lead-hunter",
+  "version": "1.0.0",
+  "description": "Local, private AI lead hunting system",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "search:now": "tsx src/cli/runSearch.ts",
+    "doctor": "tsx src/cli/doctor.ts",
+    "test": "DB_PATH=./data/test.sqlite DRY_RUN=true node --import tsx --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.7.4",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

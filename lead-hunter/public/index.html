@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Lead Hunter</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+  <h1>🎯 AI Lead Hunter</h1>
+  <nav>
+    <button data-tab="dashboard" class="tab-btn active">Dashboard</button>
+    <button data-tab="leads" class="tab-btn">Leads</button>
+    <button data-tab="settings" class="tab-btn">Inställningar</button>
+  </nav>
+  <div id="statusPill" class="status-pill">…</div>
+</header>
+
+<main>
+  <section id="tab-dashboard" class="tab-panel active">
+    <div class="stat-grid">
+      <div class="stat-card hot"><div class="stat-value" id="stat-hot">–</div><div class="stat-label">🔥 Hot leads</div></div>
+      <div class="stat-card warm"><div class="stat-value" id="stat-warm">–</div><div class="stat-label">🟠 Warm leads</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-today">–</div><div class="stat-label">📊 Leads idag</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-week">–</div><div class="stat-label">📊 Leads denna vecka</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-rejected">–</div><div class="stat-label">❌ Avvisade</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-duplicates">–</div><div class="stat-label">♻️ Dubbletter</div></div>
+    </div>
+
+    <div class="panel-row">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>🔎 Sökningar</h2>
+          <button id="triggerBtn" class="btn primary">Kör sökning nu</button>
+        </div>
+        <table class="mini-table">
+          <thead><tr><th>Startad</th><th>Status</th><th>Queries</th><th>Kandidater</th><th>Accepterade</th><th>Dubbletter</th><th>Avvisade</th><th>Fel</th></tr></thead>
+          <tbody id="searchRunsBody"></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>Källor</h2>
+        <table class="mini-table">
+          <thead><tr><th>Namn</th><th>Typ</th><th>Kvalitet</th><th>OK</th><th>Fel</th></tr></thead>
+          <tbody id="sourcesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-leads" class="tab-panel">
+    <div class="filters">
+      <select id="filterStatus"><option value="">Alla statusar</option></select>
+      <select id="filterCategory"><option value="">Alla kategorier</option></select>
+      <select id="filterLocation"><option value="">Alla platser</option></select>
+      <input id="filterMinScore" type="number" placeholder="Min score" min="0" max="100" />
+      <button id="applyFilters" class="btn">Filtrera</button>
+    </div>
+    <table class="lead-table">
+      <thead><tr><th>Score</th><th>Kategori</th><th>Tjänst</th><th>Plats</th><th>Ålder</th><th>Källa</th><th>Status</th></tr></thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-settings" class="tab-panel">
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Allmänt</h2>
+        <label>Max lead-ålder (dagar) <input id="set-maxAge" type="number" min="1" /></label>
+        <label>Minsta score för notis <input id="set-minScore" type="number" min="0" max="100" /></label>
+        <label>Sökintervall (timmar) <input id="set-interval" type="number" min="1" /></label>
+        <label>Sökintensitet
+          <select id="set-intensity"><option>LOW</option><option>MEDIUM</option><option>HIGH</option></select>
+        </label>
+        <label><input id="set-telegram" type="checkbox" /> Telegram-notiser aktiverade</label>
+        <button id="saveSettings" class="btn primary">Spara inställningar</button>
+      </div>
+      <div class="panel">
+        <h2>Kategorier</h2>
+        <div id="categoriesList" class="toggle-list"></div>
+      </div>
+      <div class="panel">
+        <h2>Platser</h2>
+        <div id="locationsList" class="toggle-list"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="leadModal" class="modal hidden">
+  <div class="modal-content">
+    <button id="closeModal" class="btn close">✕</button>
+    <div id="leadModalBody"></div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
