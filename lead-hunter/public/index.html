@@ -4,93 +4,158 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AI Lead Hunter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-<header>
-  <h1>🎯 AI Lead Hunter</h1>
-  <nav>
-    <button data-tab="dashboard" class="tab-btn active">Dashboard</button>
-    <button data-tab="leads" class="tab-btn">Leads</button>
-    <button data-tab="settings" class="tab-btn">Inställningar</button>
-  </nav>
-  <div id="statusPill" class="status-pill">…</div>
-</header>
+<div class="app">
 
-<main>
-  <section id="tab-dashboard" class="tab-panel active">
-    <div class="stat-grid">
-      <div class="stat-card hot"><div class="stat-value" id="stat-hot">–</div><div class="stat-label">🔥 Hot leads</div></div>
-      <div class="stat-card warm"><div class="stat-value" id="stat-warm">–</div><div class="stat-label">🟠 Warm leads</div></div>
-      <div class="stat-card"><div class="stat-value" id="stat-today">–</div><div class="stat-label">📊 Leads idag</div></div>
-      <div class="stat-card"><div class="stat-value" id="stat-week">–</div><div class="stat-label">📊 Leads denna vecka</div></div>
-      <div class="stat-card"><div class="stat-value" id="stat-rejected">–</div><div class="stat-label">❌ Avvisade</div></div>
-      <div class="stat-card"><div class="stat-value" id="stat-duplicates">–</div><div class="stat-label">♻️ Dubbletter</div></div>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">✦</span>
+      <span class="brand-text">Lead Hunter</span>
     </div>
 
-    <div class="panel-row">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>🔎 Sökningar</h2>
-          <button id="triggerBtn" class="btn primary">Kör sökning nu</button>
+    <nav class="side-nav">
+      <button data-tab="dashboard" class="nav-btn active">
+        <span class="nav-icon">◈</span> Översikt
+      </button>
+      <button data-tab="leads" class="nav-btn">
+        <span class="nav-icon">◇</span> Leads
+      </button>
+      <button data-tab="notiser" class="nav-btn">
+        <span class="nav-icon">♦</span> Notiser
+        <span id="navNotifBadge" class="nav-badge hidden">0</span>
+      </button>
+      <button data-tab="settings" class="nav-btn">
+        <span class="nav-icon">◆</span> Inställningar
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div id="statusPill" class="status-pill">laddar…</div>
+    </div>
+  </aside>
+
+  <div class="main-col">
+
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="pageTitle">Översikt</h1>
+        <p id="pageSubtitle" class="muted">Allt du behöver för att hitta rätt leads, på ett ställe.</p>
+      </div>
+      <div class="topbar-actions">
+        <button id="triggerBtn" class="btn btn-gold">✦ Kör sökning nu</button>
+        <button id="bellBtn" class="btn-icon" title="Notiser">
+          🔔<span id="bellBadge" class="bell-badge hidden">0</span>
+        </button>
+      </div>
+
+      <div id="bellDropdown" class="bell-dropdown hidden">
+        <div class="bell-dropdown-head">Senaste notiser</div>
+        <div id="bellList" class="bell-list"></div>
+        <button class="bell-viewall" data-tab="notiser">Visa alla notiser →</button>
+      </div>
+    </header>
+
+    <main>
+
+      <section id="tab-dashboard" class="tab-panel active">
+        <div class="stat-grid">
+          <div class="stat-card gold"><div class="stat-value" id="stat-hot">–</div><div class="stat-label">Hot leads</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-warm">–</div><div class="stat-label">Warm leads</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-today">–</div><div class="stat-label">Leads idag</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-week">–</div><div class="stat-label">Denna vecka</div></div>
+          <div class="stat-card muted-card"><div class="stat-value" id="stat-rejected">–</div><div class="stat-label">Avvisade</div></div>
+          <div class="stat-card muted-card"><div class="stat-value" id="stat-duplicates">–</div><div class="stat-label">Dubbletter</div></div>
         </div>
-        <table class="mini-table">
-          <thead><tr><th>Startad</th><th>Status</th><th>Queries</th><th>Kandidater</th><th>Accepterade</th><th>Dubbletter</th><th>Avvisade</th><th>Fel</th></tr></thead>
-          <tbody id="searchRunsBody"></tbody>
-        </table>
-      </div>
-      <div class="panel">
-        <h2>Källor</h2>
-        <table class="mini-table">
-          <thead><tr><th>Namn</th><th>Typ</th><th>Kvalitet</th><th>OK</th><th>Fel</th></tr></thead>
-          <tbody id="sourcesBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
 
-  <section id="tab-leads" class="tab-panel">
-    <div class="filters">
-      <select id="filterStatus"><option value="">Alla statusar</option></select>
-      <select id="filterCategory"><option value="">Alla kategorier</option></select>
-      <select id="filterLocation"><option value="">Alla platser</option></select>
-      <input id="filterMinScore" type="number" placeholder="Min score" min="0" max="100" />
-      <button id="applyFilters" class="btn">Filtrera</button>
-    </div>
-    <table class="lead-table">
-      <thead><tr><th>Score</th><th>Kategori</th><th>Tjänst</th><th>Plats</th><th>Ålder</th><th>Källa</th><th>Status</th></tr></thead>
-      <tbody id="leadsBody"></tbody>
-    </table>
-  </section>
+        <div class="panel-row">
+          <div class="panel span-2">
+            <div class="panel-header">
+              <h2>Sökningar</h2>
+            </div>
+            <div class="table-scroll">
+              <table class="mini-table">
+                <thead><tr><th>Startad</th><th>Status</th><th>Queries</th><th>Kandidater</th><th>Accepterade</th><th>Dubbletter</th><th>Avvisade</th><th>Fel</th></tr></thead>
+                <tbody id="searchRunsBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2>Källor</h2></div>
+            <table class="mini-table">
+              <thead><tr><th>Namn</th><th>Kvalitet</th><th>OK</th><th>Fel</th></tr></thead>
+              <tbody id="sourcesBody"></tbody>
+            </table>
+          </div>
+        </div>
 
-  <section id="tab-settings" class="tab-panel">
-    <div class="panel-row">
-      <div class="panel">
-        <h2>Allmänt</h2>
-        <label>Max lead-ålder (dagar) <input id="set-maxAge" type="number" min="1" /></label>
-        <label>Minsta score för notis <input id="set-minScore" type="number" min="0" max="100" /></label>
-        <label>Sökintervall (timmar) <input id="set-interval" type="number" min="1" /></label>
-        <label>Sökintensitet
-          <select id="set-intensity"><option>LOW</option><option>MEDIUM</option><option>HIGH</option></select>
-        </label>
-        <label><input id="set-telegram" type="checkbox" /> Telegram-notiser aktiverade</label>
-        <button id="saveSettings" class="btn primary">Spara inställningar</button>
-      </div>
-      <div class="panel">
-        <h2>Kategorier</h2>
-        <div id="categoriesList" class="toggle-list"></div>
-      </div>
-      <div class="panel">
-        <h2>Platser</h2>
-        <div id="locationsList" class="toggle-list"></div>
-      </div>
-    </div>
-  </section>
-</main>
+        <div class="panel">
+          <div class="panel-header"><h2>Senaste notiser</h2></div>
+          <div id="dashNotifList" class="notif-list"></div>
+        </div>
+      </section>
+
+      <section id="tab-leads" class="tab-panel">
+        <div class="filters">
+          <select id="filterStatus"><option value="">Alla statusar</option></select>
+          <select id="filterCategory"><option value="">Alla kategorier</option></select>
+          <select id="filterLocation"><option value="">Alla platser</option></select>
+          <input id="filterMinScore" type="number" placeholder="Min score" min="0" max="100" />
+          <button id="applyFilters" class="btn btn-outline">Filtrera</button>
+        </div>
+        <div class="table-scroll">
+          <table class="lead-table">
+            <thead><tr><th>Score</th><th>Kategori</th><th>Tjänst</th><th>Plats</th><th>Ålder</th><th>Källa</th><th>Status</th></tr></thead>
+            <tbody id="leadsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-notiser" class="tab-panel">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Notishistorik</h2>
+            <button id="refreshNotifs" class="btn btn-outline">Uppdatera</button>
+          </div>
+          <div id="fullNotifList" class="notif-list"></div>
+        </div>
+      </section>
+
+      <section id="tab-settings" class="tab-panel">
+        <div class="panel-row">
+          <div class="panel">
+            <div class="panel-header"><h2>Allmänt</h2></div>
+            <label>Max lead-ålder (dagar)<input id="set-maxAge" type="number" min="1" /></label>
+            <label>Minsta score för notis<input id="set-minScore" type="number" min="0" max="100" /></label>
+            <label>Sökintervall (timmar)<input id="set-interval" type="number" min="1" /></label>
+            <label>Sökintensitet
+              <select id="set-intensity"><option>LOW</option><option>MEDIUM</option><option>HIGH</option></select>
+            </label>
+            <label class="check-label"><input id="set-telegram" type="checkbox" /> Telegram-notiser aktiverade</label>
+            <button id="saveSettings" class="btn btn-gold">Spara inställningar</button>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2>Kategorier</h2></div>
+            <div id="categoriesList" class="toggle-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2>Platser</h2></div>
+            <div id="locationsList" class="toggle-list"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
 
 <div id="leadModal" class="modal hidden">
   <div class="modal-content">
-    <button id="closeModal" class="btn close">✕</button>
+    <button id="closeModal" class="btn-icon close">✕</button>
     <div id="leadModalBody"></div>
   </div>
 </div>

@@ -19,21 +19,101 @@ async function api(path, opts = {}) {
 
 const LEAD_STATUSES = ["NEW", "REVIEWED", "HOT", "WARM", "SOLD", "CONTACTED", "DISCARDED", "DUPLICATE"];
 
-// ── Tabs ───────────────────────────────────────────────────────────────
-document.querySelectorAll(".tab-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
-  });
+const PAGE_META = {
+  dashboard: ["Översikt", "Allt du behöver för att hitta rätt leads, på ett ställe."],
+  leads: ["Leads", "Bläddra, filtrera och hantera alla upptäckta leads."],
+  notiser: ["Notiser", "Historik över alla notiser som skickats eller loggats."],
+  settings: ["Inställningar", "Kategorier, platser, tröskelvärden och notiser."],
+};
+
+// ── Navigation ─────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll(".nav-btn[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === `tab-${tab}`));
+  const meta = PAGE_META[tab];
+  if (meta) {
+    document.getElementById("pageTitle").textContent = meta[0];
+    document.getElementById("pageSubtitle").textContent = meta[1];
+  }
+  closeBell();
+}
+
+document.querySelectorAll("[data-tab]").forEach((el) => {
+  el.addEventListener("click", () => switchTab(el.dataset.tab));
 });
+
+// ── Bell dropdown ────────────────────────────────────────────────────────
+function closeBell() {
+  document.getElementById("bellDropdown").classList.add("hidden");
+}
+document.getElementById("bellBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  document.getElementById("bellDropdown").classList.toggle("hidden");
+});
+document.addEventListener("click", (e) => {
+  const dd = document.getElementById("bellDropdown");
+  if (!dd.classList.contains("hidden") && !dd.contains(e.target) && e.target.id !== "bellBtn") closeBell();
+});
+
+// ── Notifications ────────────────────────────────────────────────────────
+function timeAgo(iso) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return "just nu";
+  if (mins < 60) return `${mins} min sedan`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} tim sedan`;
+  return `${Math.round(hrs / 24)} dagar sedan`;
+}
+
+function notifItemHtml(n) {
+  const icon = !n.success ? "⚠️" : n.type === "DIGEST" ? "📊" : "✦";
+  return `<div class="notif-item ${!n.success ? "fail" : ""}">
+    <div class="notif-icon">${icon}</div>
+    <div class="notif-body">
+      <div class="notif-msg">${escapeHtml(n.message).slice(0, 240)}</div>
+      <div class="notif-meta">${timeAgo(n.sentAt)}${n.success ? "" : " · misslyckades" + (n.error ? `: ${escapeHtml(n.error)}` : "")}</div>
+    </div>
+  </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function loadNotifications() {
+  const notifs = await api("/api/notifications?limit=50");
+
+  const bellList = document.getElementById("bellList");
+  const preview = notifs.slice(0, 6);
+  bellList.innerHTML = preview.length
+    ? preview.map(notifItemHtml).join("")
+    : `<div class="notif-empty">Inga notiser ännu.</div>`;
+
+  document.getElementById("fullNotifList").innerHTML = notifs.length
+    ? notifs.map(notifItemHtml).join("")
+    : `<div class="notif-empty">Inga notiser ännu. Du får en notis här (och via Telegram om det är aktiverat) när ett hett eller varmt lead hittas.</div>`;
+
+  document.getElementById("dashNotifList").innerHTML = notifs.slice(0, 5).length
+    ? notifs.slice(0, 5).map(notifItemHtml).join("")
+    : `<div class="notif-empty">Inga notiser ännu.</div>`;
+
+  const badgeEls = [document.getElementById("bellBadge"), document.getElementById("navNotifBadge")];
+  badgeEls.forEach((el) => {
+    if (notifs.length === 0) {
+      el.classList.add("hidden");
+    } else {
+      el.textContent = notifs.length > 99 ? "99+" : notifs.length;
+      el.classList.remove("hidden");
+    }
+  });
+}
 
 // ── Dashboard ────────────────────────────────────────────────────────────
 async function loadHealth() {
   const h = await api("/api/health");
-  document.getElementById("statusPill").textContent =
-    `AI: ${h.aiClient} · Telegram: ${h.telegramConfigured ? "på" : "av"}${h.dryRun ? " · DRY_RUN" : ""}${h.searching ? " · söker nu…" : ""}`;
+  document.getElementById("statusPill").innerHTML =
+    `AI: ${h.aiClient}<br/>Telegram: ${h.telegramConfigured ? "på ✓" : "av"}${h.dryRun ? " · DRY_RUN" : ""}${h.searching ? "<br/>🔍 söker just nu…" : ""}`;
 }
 
 async function loadStats() {
@@ -49,9 +129,10 @@ async function loadStats() {
 async function loadSearchRuns() {
   const runs = await api("/api/search-runs");
   const body = document.getElementById("searchRunsBody");
-  body.innerHTML = runs
-    .map(
-      (r) => `<tr>
+  body.innerHTML =
+    runs
+      .map(
+        (r) => `<tr>
         <td>${new Date(r.startedAt).toLocaleString("sv-SE")}</td>
         <td>${r.status}</td>
         <td>${r.queriesExecuted}</td>
@@ -61,18 +142,16 @@ async function loadSearchRuns() {
         <td>${r.rejected}</td>
         <td>${r.errors}</td>
       </tr>`
-    )
-    .join("") || `<tr><td colspan="8" style="color:var(--muted)">Inga sökningar körda ännu.</td></tr>`;
+      )
+      .join("") || `<tr class="empty-row"><td colspan="8">Inga sökningar körda ännu.</td></tr>`;
 }
 
 async function loadSources() {
   const sources = await api("/api/sources");
   const body = document.getElementById("sourcesBody");
-  body.innerHTML = sources
-    .map(
-      (s) => `<tr><td>${s.name}</td><td>${s.type}</td><td>${s.quality}</td><td>${s.successCount}</td><td>${s.errorCount}</td></tr>`
-    )
-    .join("") || `<tr><td colspan="5" style="color:var(--muted)">Inga källor har körts ännu.</td></tr>`;
+  body.innerHTML =
+    sources.map((s) => `<tr><td>${s.name}</td><td>${s.quality}</td><td>${s.successCount}</td><td>${s.errorCount}</td></tr>`).join("") ||
+    `<tr class="empty-row"><td colspan="4">Inga källor har körts ännu.</td></tr>`;
 }
 
 document.getElementById("triggerBtn").addEventListener("click", async () => {
@@ -81,22 +160,25 @@ document.getElementById("triggerBtn").addEventListener("click", async () => {
   btn.textContent = "Söker…";
   try {
     await api("/api/search-runs/trigger", { method: "POST" });
-    setTimeout(refreshDashboard, 3000);
+    setTimeout(refreshAll, 3000);
   } catch (e) {
     alert("Kunde inte starta sökning: " + e.message);
   } finally {
     setTimeout(() => {
       btn.disabled = false;
-      btn.textContent = "Kör sökning nu";
+      btn.textContent = "✦ Kör sökning nu";
     }, 3000);
   }
 });
 
-function refreshDashboard() {
+document.getElementById("refreshNotifs").addEventListener("click", loadNotifications);
+
+function refreshAll() {
   loadHealth();
   loadStats();
   loadSearchRuns();
   loadSources();
+  loadNotifications();
 }
 
 // ── Leads ────────────────────────────────────────────────────────────────
@@ -124,7 +206,7 @@ async function loadLeads() {
   const leads = await api(`/api/leads?${params.toString()}`);
   const body = document.getElementById("leadsBody");
   if (leads.length === 0) {
-    body.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">0 leads matchar filtret. (Systemet hittar aldrig på falska leads — "0 new qualified leads" är ett giltigt resultat.)</td></tr>`;
+    body.innerHTML = `<tr class="empty-row"><td colspan="7">0 leads matchar filtret. Systemet hittar aldrig på falska leads — "0 kvalificerade leads" är ett giltigt och ärligt resultat.</td></tr>`;
     return;
   }
   body.innerHTML = leads
@@ -167,11 +249,11 @@ async function openLead(id) {
       <dt>Källa</dt><dd><a href="${l.sourceUrl}" target="_blank" rel="noopener">${l.sourceTitle || l.sourceUrl}</a></dd>
     </dl>
     <div class="modal-actions">
-      <a class="btn" href="${l.sourceUrl}" target="_blank" rel="noopener">OPEN SOURCE</a>
-      <button class="btn" data-status="SOLD">MARK AS SOLD</button>
-      <button class="btn" data-status="CONTACTED">MARK AS CONTACTED</button>
-      <button class="btn" data-status="REVIEWED">MARK AS REVIEWED</button>
-      <button class="btn" data-status="DISCARDED">DISCARD</button>
+      <a class="btn btn-gold" href="${l.sourceUrl}" target="_blank" rel="noopener">Öppna källa</a>
+      <button class="btn" data-status="SOLD">Markera som Sold</button>
+      <button class="btn" data-status="CONTACTED">Markera som Contacted</button>
+      <button class="btn" data-status="REVIEWED">Markera som Reviewed</button>
+      <button class="btn" data-status="DISCARDED">Discard</button>
     </div>`;
   body.querySelectorAll("button[data-status]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -219,11 +301,7 @@ document.getElementById("saveSettings").addEventListener("click", async () => {
 async function loadCategories() {
   const categories = await api("/api/categories");
   const list = document.getElementById("categoriesList");
-  list.innerHTML = categories
-    .map(
-      (c) => `<label><input type="checkbox" data-cat="${c.id}" ${c.enabled ? "checked" : ""}/> ${c.name}</label>`
-    )
-    .join("");
+  list.innerHTML = categories.map((c) => `<label><input type="checkbox" data-cat="${c.id}" ${c.enabled ? "checked" : ""}/> ${c.name}</label>`).join("");
   list.querySelectorAll("input[data-cat]").forEach((cb) => {
     cb.addEventListener("change", () => api(`/api/categories/${cb.dataset.cat}`, { method: "PUT", body: JSON.stringify({ enabled: cb.checked }) }));
   });
@@ -243,10 +321,10 @@ async function loadLocations() {
 // ── Init ─────────────────────────────────────────────────────────────────
 (async function init() {
   await populateFilterOptions();
-  refreshDashboard();
+  refreshAll();
   loadLeads();
   loadSettings();
   loadCategories();
   loadLocations();
-  setInterval(refreshDashboard, 30000);
+  setInterval(refreshAll, 30000);
 })();

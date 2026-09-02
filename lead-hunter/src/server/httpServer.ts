@@ -9,6 +9,7 @@ import { listCategories, setCategoryEnabled, upsertCategory, deleteCategory } fr
 import { listLocations, setLocationEnabled, addLocation, deleteLocation } from "../db/repositories/locationsRepo.js";
 import { listSources } from "../db/repositories/sourcesRepo.js";
 import { listSearchRuns } from "../db/repositories/searchRunsRepo.js";
+import { listNotifications } from "../db/repositories/notificationsRepo.js";
 import { getSettings, updateSettings } from "../db/repositories/settingsRepo.js";
 import { triggerSearchNow, isSearchRunning } from "../scheduler/scheduler.js";
 import { activeAiClientName } from "../ai/index.js";
@@ -196,6 +197,12 @@ async function handleApi(p: string, method: string, req: http.IncomingMessage, r
 
   // ── Sources ──────────────────────────────────────────────────────────
   if (p === "/api/sources" && method === "GET") return send(res, 200, listSources());
+
+  // ── Notifications ────────────────────────────────────────────────────
+  if (p === "/api/notifications" && method === "GET") {
+    const limit = u.searchParams.get("limit");
+    return send(res, 200, listNotifications(limit ? Number(limit) : undefined));
+  }
 
   // ── Search runs ──────────────────────────────────────────────────────
   if (p === "/api/search-runs" && method === "GET") return send(res, 200, listSearchRuns());
