@@ -1,0 +1,37 @@
+# Render.com Blueprint for AI Lead Hunter.
+#
+# This lets Render auto-detect the service when you connect this repo via
+# "New +" → "Blueprint" — it fills in the build/start commands and asks you
+# to type in the secret values below. If Blueprint detection doesn't pick
+# this up for any reason, see lead-hunter/README.md for the equivalent
+# manual setup (same values, entered by hand in the dashboard).
+services:
+  - type: web
+    name: ai-lead-hunter
+    runtime: node
+    plan: free
+    rootDir: lead-hunter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Recommended: set this so the dashboard isn't open to the whole
+      # internet without a password once it has a public URL.
+      - key: APP_PASSWORD
+        sync: false
+      # Optional — leave unset to use the free rule-based AI fallback.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-3-5-haiku-20241022
+      # Optional — leave unset to skip Telegram notifications.
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: DRY_RUN
+        value: "false"
+      - key: LOG_LEVEL
+        value: info

@@ -37,16 +37,69 @@ npm run search:now
 ## Använda den på telefonen
 
 Backend-servern (databas, sökningar, AI, schemaläggare) måste alltid köra
-någonstans kontinuerligt — den kan inte köras på telefonen själv. Två sätt
-att använda den därifrån, båda pratar med samma server över samma API:
+någonstans kontinuerligt — den kan inte köras på telefonen själv. Två
+lägen, beroende på om du har en dator som kan stå påslagen eller ej:
 
-**1. Som webbapp (snabbast, ingen installation)** — dashboarden är en
-installningsbar PWA. Öppna `http://DATORNS-IP:3100` i telefonens webbläsare
-(samma WiFi som datorn) och välj "Lägg till på hemskärmen" (iOS Safari)
-eller installationsikonen i adressfältet (Android Chrome). Den beter sig
-sedan som en vanlig app-ikon, med offline-stöd för själva gränssnittet.
+### A) Du har bara telefonen (inget datorterminal)
 
-**2. Som riktig Expo-app** — en separat React Native-app i samma
+Distribuera servern till en gratis molntjänst — allt nedan görs genom att
+trycka dig igenom en webbsida i telefonens webbläsare, ingen kod, ingen
+terminal.
+
+**1. Skapa konto på [render.com](https://render.com)** — gratis, inget
+kort krävs. Logga in med GitHub om du kan, det sparar ett steg.
+
+**2. Anslut det här repot** — tryck **New +** → **Web Service** (eller
+**Blueprint** om Render hittar `render.yaml` automatiskt och fyller i allt
+åt dig) → välj GitHub-repot `Morgon-SMS-`.
+
+**3. Om du fick den manuella formuläret (inte Blueprint), fyll i:**
+
+| Fält | Värde |
+|---|---|
+| Root Directory | `lead-hunter` |
+| Build Command | `npm install && npm run build` |
+| Start Command | `npm start` |
+| Instance Type | **Free** |
+
+**4. Lägg till miljövariabler** (under "Environment" i samma formulär):
+
+| Namn | Värde | Krävs? |
+|---|---|---|
+| `APP_PASSWORD` | ett eget lösenord | **Ja** — annars är dashboarden öppen för hela internet |
+| `DRY_RUN` | `false` | Ja |
+| `ANTHROPIC_API_KEY` | din nyckel | Nej — utan den används gratis AI-fallback |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | se avsnittet nedan | Nej |
+
+**5. Tryck Deploy.** Första bygget tar några minuter. När det är klart får
+du en adress som `https://ai-lead-hunter-xxxx.onrender.com`.
+
+**6. Öppna adressen i telefonens webbläsare** → logga in med lösenordet du
+satte → **Lägg till på hemskärmen** (Safari: dela-ikonen; Chrome: menyn ⋮).
+Nu har du en app-ikon som pratar med din alltid-igång-server.
+
+**Att tänka på med gratisnivån:** tjänsten "somnar" efter en stunds
+inaktivitet och tar 30–60 sekunder att vakna igen vid nästa besök — det
+betyder att den automatiska schemaläggaren (var 6:e timme) inte nödvändigtvis
+hinner köra medan den sover. Enklast fix: öppna appen då och då själv (det
+väcker den och kör igång), eller sätt upp en gratis "ping"-tjänst som
+[cron-job.org](https://cron-job.org) att anropa `https://din-adress/api/health`
+var 10:e minut — går också att ställa in helt från telefonen. Data i
+databasen överlever att tjänsten somnar/vaknar, men kan nollställas om du
+gör om deployen (pushar ny kod) — helt okej för ett gratis personligt
+verktyg, men bra att veta.
+
+### B) Du har en dator som kan stå på
+
+Kör servern lokalt (`npm run dev` enligt Snabbstart ovan) och öppna den
+från telefonen:
+
+**Som webbapp** — dashboarden är en installningsbar PWA. Öppna
+`http://DATORNS-IP:3100` i telefonens webbläsare (samma WiFi som datorn)
+och välj "Lägg till på hemskärmen" (iOS Safari) eller installationsikonen
+i adressfältet (Android Chrome).
+
+**Som riktig Expo-app** — en separat React Native-app i samma
 beige/vit/guld-stil, med lokala notiser på telefonen. Se
 [`mobile/README.md`](mobile/README.md) för fullständiga instruktioner
 (körs via Expo Go, ingen app store krävs för eget bruk):
@@ -57,7 +110,8 @@ npm install
 npx expo start
 ```
 
-Skanna QR-koden med Expo Go-appen, ange sedan datorns IP-adress och port på
+Skanna QR-koden med Expo Go-appen, ange sedan datorns IP-adress och port
+(eller din publika Render-adress om du valde alternativ A) på
 anslutningsskärmen.
 
 ## Vad krävs egentligen?
