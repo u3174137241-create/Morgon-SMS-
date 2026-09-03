@@ -42,18 +42,32 @@ lägen, beroende på om du har en dator som kan stå påslagen eller ej:
 
 ### A) Du har bara telefonen (inget datorterminal)
 
-Distribuera servern till en gratis molntjänst — allt nedan görs genom att
-trycka dig igenom en webbsida i telefonens webbläsare, ingen kod, ingen
-terminal.
+Ett enda tryck sätter upp servern på en gratis molntjänst — resten fyller
+sig i automatiskt från `render.yaml` i det här repot.
 
-**1. Skapa konto på [render.com](https://render.com)** — gratis, inget
-kort krävs. Logga in med GitHub om du kan, det sparar ett steg.
+**1. Tryck på den här länken i telefonens webbläsare:**
 
-**2. Anslut det här repot** — tryck **New +** → **Web Service** (eller
-**Blueprint** om Render hittar `render.yaml` automatiskt och fyller i allt
-åt dig) → välj GitHub-repot `Morgon-SMS-`.
+**[👉 render.com/deploy?repo=github.com/u3174137241-create/Morgon-SMS-](https://render.com/deploy?repo=https://github.com/u3174137241-create/Morgon-SMS-)**
 
-**3. Om du fick den manuella formuläret (inte Blueprint), fyll i:**
+**2. Logga in eller skapa konto** om du inte redan har ett (gratis, inget
+kort krävs — GitHub-inloggning går snabbast).
+
+**3. Du landar på EN sida** med några ifyllda fält och en ruta för
+`APP_PASSWORD`. Skriv ett eget lösenord där — **viktigt**, annars är
+dashboarden öppen för hela internet. Allt annat kan lämnas tomt.
+
+**4. Tryck "Apply"/"Deploy Blueprint".** Första bygget tar några minuter.
+När det är klart får du en adress som `https://ai-lead-hunter-xxxx.onrender.com`.
+
+**5. Öppna adressen i telefonens webbläsare** → logga in med lösenordet du
+satte → **Lägg till på hemskärmen** (Safari: dela-ikonen; Chrome: menyn ⋮).
+Klart — nu har du en app-ikon som pratar med din alltid-igång-server.
+
+<details>
+<summary>Fungerade inte länken, eller vill du fylla i fälten själv?</summary>
+
+Tryck **New +** → **Web Service** → välj GitHub-repot `Morgon-SMS-`, och
+fyll i för hand:
 
 | Fält | Värde |
 |---|---|
@@ -62,21 +76,9 @@ kort krävs. Logga in med GitHub om du kan, det sparar ett steg.
 | Start Command | `npm start` |
 | Instance Type | **Free** |
 
-**4. Lägg till miljövariabler** (under "Environment" i samma formulär):
-
-| Namn | Värde | Krävs? |
-|---|---|---|
-| `APP_PASSWORD` | ett eget lösenord | **Ja** — annars är dashboarden öppen för hela internet |
-| `DRY_RUN` | `false` | Ja |
-| `ANTHROPIC_API_KEY` | din nyckel | Nej — utan den används gratis AI-fallback |
-| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | se avsnittet nedan | Nej |
-
-**5. Tryck Deploy.** Första bygget tar några minuter. När det är klart får
-du en adress som `https://ai-lead-hunter-xxxx.onrender.com`.
-
-**6. Öppna adressen i telefonens webbläsare** → logga in med lösenordet du
-satte → **Lägg till på hemskärmen** (Safari: dela-ikonen; Chrome: menyn ⋮).
-Nu har du en app-ikon som pratar med din alltid-igång-server.
+Lägg sedan till miljövariabeln `APP_PASSWORD` (ditt eget lösenord — krävs)
+och `DRY_RUN` = `false` under "Environment", och tryck Deploy.
+</details>
 
 **Att tänka på med gratisnivån:** tjänsten "somnar" efter en stunds
 inaktivitet och tar 30–60 sekunder att vakna igen vid nästa besök — det
