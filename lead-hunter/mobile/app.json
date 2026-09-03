@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Lead Hunter",
+    "slug": "ai-lead-hunter",
+    "scheme": "leadhunter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#faf6ef",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.leadhunter.mobile"
+    },
+    "android": {
+      "package": "com.leadhunter.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#f4ecdf",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "backgroundColor": "#faf6ef"
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#faf6ef"
+    },
+    "notification": {
+      "iosDisplayInForeground": true,
+      "color": "#b8924f"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#b8924f"
+        }
+      ]
+    ]
+  }
+}

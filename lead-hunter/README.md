@@ -34,6 +34,32 @@ Kör en enskild sökning direkt från terminalen (utan att starta hela servern):
 npm run search:now
 ```
 
+## Använda den på telefonen
+
+Backend-servern (databas, sökningar, AI, schemaläggare) måste alltid köra
+någonstans kontinuerligt — den kan inte köras på telefonen själv. Två sätt
+att använda den därifrån, båda pratar med samma server över samma API:
+
+**1. Som webbapp (snabbast, ingen installation)** — dashboarden är en
+installningsbar PWA. Öppna `http://DATORNS-IP:3100` i telefonens webbläsare
+(samma WiFi som datorn) och välj "Lägg till på hemskärmen" (iOS Safari)
+eller installationsikonen i adressfältet (Android Chrome). Den beter sig
+sedan som en vanlig app-ikon, med offline-stöd för själva gränssnittet.
+
+**2. Som riktig Expo-app** — en separat React Native-app i samma
+beige/vit/guld-stil, med lokala notiser på telefonen. Se
+[`mobile/README.md`](mobile/README.md) för fullständiga instruktioner
+(körs via Expo Go, ingen app store krävs för eget bruk):
+
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+Skanna QR-koden med Expo Go-appen, ange sedan datorns IP-adress och port på
+anslutningsskärmen.
+
 ## Vad krävs egentligen?
 
 **Ingenting är obligatoriskt.** Systemet fungerar helt gratis direkt efter
@@ -150,8 +176,13 @@ aldrig automatiska meddelanden till personer.
 - **Leads-fliken**: filtrerbar lista (status/kategori/plats/min-score).
   Klicka på ett lead för fullständig info, öppna originalkällan, eller
   markera som Sold/Contacted/Reviewed/Discarded.
+- **Notiser-fliken**: historik över alla notiser (skickade, DRY_RUN-loggade
+  och misslyckade), med en klocka i headern för snabb överblick.
 - **Inställningar-fliken**: allt under "Konfiguration" ovan, plus
   kategori-/platstoggling.
+
+Dashboarden är även en installningsbar PWA (manifest + service worker) —
+se ["Använda den på telefonen"](#använda-den-på-telefonen) ovan.
 
 ## Självdiagnostik
 
@@ -199,6 +230,12 @@ JSON-validering av AI-svar, och notisformattering.
 - **Windows** — `npm test` sätter miljövariabler med Unix-syntax
   (`DB_PATH=... command`). Kör via WSL eller Git Bash, eller sätt
   variablerna manuellt i din terminal innan du kör testkommandot.
+- **Telefonen/Expo-appen kan inte nå servern** — kontrollera att telefonen
+  är på samma WiFi-nätverk som datorn, att du använder datorns lokala
+  IP-adress (inte `localhost`), och att ingen brandvägg blockerar porten
+  (`3100` som default). Testa genom att öppna samma adress i telefonens
+  webbläsare först. API:t skickar redan med CORS-headers så webbläsare och
+  Expo-appen kan nå det från en annan origin/enhet.
 
 ## Arkitektur & designval
 

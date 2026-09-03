@@ -27,6 +27,9 @@ const MIME: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
 };
 
 function send(res: http.ServerResponse, code: number, body: unknown): void {
@@ -75,6 +78,22 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
   const u = new URL(req.url || "/", "http://localhost");
   const p = u.pathname;
   const method = req.method || "GET";
+
+  // CORS: the mobile app (Expo web target, and any browser-based client)
+  // talks to this server from a different origin — native iOS/Android fetch
+  // doesn't enforce CORS, but browsers do, so the API needs to allow it
+  // explicitly. This server has no cookies/session state, so a permissive
+  // origin is safe; auth is the x-app-password header, not same-origin trust.
+  if (p.startsWith("/api/")) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-app-password");
+    if (method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+  }
 
   // ── Unauthenticated ────────────────────────────────────────────────────
   if (p === "/api/health" && method === "GET") {

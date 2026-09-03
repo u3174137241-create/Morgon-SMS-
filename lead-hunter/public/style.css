@@ -26,6 +26,9 @@ body {
   background: var(--cream);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+  /* Respect the notch/home-indicator when installed as a standalone PWA */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 h1, h2, h3 {

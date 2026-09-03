@@ -1,5 +1,15 @@
 const state = { appPassword: localStorage.getItem("app_password") || "" };
 
+// Register the PWA service worker so the dashboard is installable
+// ("Lägg till på hemskärmen") and its shell works offline.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Non-fatal — the dashboard works fine without offline support.
+    });
+  });
+}
+
 async function api(path, opts = {}) {
   const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
   if (state.appPassword) headers["x-app-password"] = state.appPassword;
