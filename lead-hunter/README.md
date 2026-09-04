@@ -42,54 +42,21 @@ lägen, beroende på om du har en dator som kan stå påslagen eller ej:
 
 ### A) Du har bara telefonen (inget datorterminal)
 
-Ett enda tryck sätter upp servern på en gratis molntjänst — resten fyller
-sig i automatiskt från `render.yaml` i det här repot.
+Systemet är redan igång — som en Supabase Edge Function med egen
+Postgres-databas och en inbyggd `pg_cron`-schemaläggare som kör sökningar
+åt dig automatiskt. Du behöver inte installera, bygga eller deploya
+någonting. Öppna bara adressen på telefonen:
 
-**1. Tryck på den här länken i telefonens webbläsare:**
+**Dashboard:** `https://tjznmoqqzmlvzozzewox.supabase.co/functions/v1/lead-hunter`
 
-**[👉 render.com/deploy?repo=github.com/u3174137241-create/Morgon-SMS-](https://render.com/deploy?repo=https://github.com/u3174137241-create/Morgon-SMS-)**
+Logga in med lösenordet (frågas om vid första besöket, sparas sedan i
+webbläsaren) och tryck **"Lägg till på hemskärmen"** (Safari: dela-ikonen;
+Chrome: menyn ⋮) för en app-ikon.
 
-**2. Logga in eller skapa konto** om du inte redan har ett (gratis, inget
-kort krävs — GitHub-inloggning går snabbast).
-
-**3. Du landar på EN sida** med några ifyllda fält och en ruta för
-`APP_PASSWORD`. Skriv ett eget lösenord där — **viktigt**, annars är
-dashboarden öppen för hela internet. Allt annat kan lämnas tomt.
-
-**4. Tryck "Apply"/"Deploy Blueprint".** Första bygget tar några minuter.
-När det är klart får du en adress som `https://ai-lead-hunter-xxxx.onrender.com`.
-
-**5. Öppna adressen i telefonens webbläsare** → logga in med lösenordet du
-satte → **Lägg till på hemskärmen** (Safari: dela-ikonen; Chrome: menyn ⋮).
-Klart — nu har du en app-ikon som pratar med din alltid-igång-server.
-
-<details>
-<summary>Fungerade inte länken, eller vill du fylla i fälten själv?</summary>
-
-Tryck **New +** → **Web Service** → välj GitHub-repot `Morgon-SMS-`, och
-fyll i för hand:
-
-| Fält | Värde |
-|---|---|
-| Root Directory | `lead-hunter` |
-| Build Command | `npm install && npm run build` |
-| Start Command | `npm start` |
-| Instance Type | **Free** |
-
-Lägg sedan till miljövariabeln `APP_PASSWORD` (ditt eget lösenord — krävs)
-och `DRY_RUN` = `false` under "Environment", och tryck Deploy.
-</details>
-
-**Att tänka på med gratisnivån:** tjänsten "somnar" efter en stunds
-inaktivitet och tar 30–60 sekunder att vakna igen vid nästa besök — det
-betyder att den automatiska schemaläggaren (var 6:e timme) inte nödvändigtvis
-hinner köra medan den sover. Enklast fix: öppna appen då och då själv (det
-väcker den och kör igång), eller sätt upp en gratis "ping"-tjänst som
-[cron-job.org](https://cron-job.org) att anropa `https://din-adress/api/health`
-var 10:e minut — går också att ställa in helt från telefonen. Data i
-databasen överlever att tjänsten somnar/vaknar, men kan nollställas om du
-gör om deployen (pushar ny kod) — helt okej för ett gratis personligt
-verktyg, men bra att veta.
+Databasen och schemaläggningen körs helt på Supabase, gratis, utan att
+något behöver stå på hemma. Inställningar (kategorier, platser,
+sökintervall, Telegram-notiser m.m.) ändras direkt i dashboardens
+"Inställningar"-flik — inga miljövariabler eller omdeploy behövs.
 
 ### B) Du har en dator som kan stå på
 
@@ -113,7 +80,7 @@ npx expo start
 ```
 
 Skanna QR-koden med Expo Go-appen, ange sedan datorns IP-adress och port
-(eller din publika Render-adress om du valde alternativ A) på
+(eller Supabase-adressen ovan om du valde alternativ A) på
 anslutningsskärmen.
 
 ## Vad krävs egentligen?
