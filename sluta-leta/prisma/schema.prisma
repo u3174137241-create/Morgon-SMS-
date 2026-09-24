@@ -1,0 +1,538 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── Users & auth ───────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  avatarUrl         String?
+  emailVerifiedAt   DateTime?
+  isAdmin           Boolean   @default(false)
+  status            UserStatus @default(ACTIVE)
+  stripeCustomerId  String?   @unique
+  ratingSum         Int       @default(0)
+  ratingCount       Int       @default(0)
+  dealsCompleted    Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  emailVerifications   EmailVerificationToken[]
+  passwordResets       PasswordResetToken[]
+  searches             Search[]
+  listings             Listing[]
+  offersMade           Offer[]                  @relation("OffersBySeller")
+  transactionsAsBuyer  Transaction[]            @relation("TransactionsAsBuyer")
+  transactionsAsSeller Transaction[]            @relation("TransactionsAsSeller")
+  reviewsWritten       Review[]                 @relation("ReviewsAuthored")
+  reviewsReceived      Review[]                 @relation("ReviewsReceived")
+  notifications        Notification[]
+  subscription         Subscription?
+  reportsFiled         Report[]                 @relation("ReportsFiled")
+  blocksInitiated       UserBlock[]              @relation("BlocksInitiated")
+  blocksReceived        UserBlock[]              @relation("BlocksReceived")
+  messages              Message[]
+  auditLogs             AuditLog[]
+
+  @@index([email])
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────────────────── Searches (efterlysningar) ───────────────────────────────
+
+enum ItemType {
+  PRODUCT
+  SERVICE
+}
+
+enum SearchStatus {
+  ACTIVE
+  FULFILLED
+  EXPIRED
+  CANCELLED
+}
+
+model Search {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  type         ItemType
+  category     String?
+  brand        String?
+  model        String?
+  condition    String?
+  budgetMin    Int?
+  budgetMax    Int?
+  location     String
+  status       SearchStatus @default(ACTIVE)
+  requirements Json?
+  expiresAt    DateTime
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  images          SearchImage[]
+  offers          Offer[]
+  externalResults ExternalResult[]
+
+  @@index([status, expiresAt])
+  @@index([type, category])
+}
+
+model SearchImage {
+  id       String @id @default(cuid())
+  searchId String
+  search   Search @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  url      String
+  order    Int    @default(0)
+}
+
+// ─────────────────────────────── Listings (Hitta köpare) ───────────────────────────────
+
+enum ListingStatus {
+  ACTIVE
+  MATCHED
+  CLOSED
+}
+
+model Listing {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  type        ItemType
+  category    String?
+  brand       String?
+  model       String?
+  condition   String?
+  price       Int
+  location    String
+  status      ListingStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  images ListingImage[]
+  offers Offer[]
+
+  @@index([status])
+}
+
+model ListingImage {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  order     Int     @default(0)
+}
+
+// ─────────────────────────────── Offers ───────────────────────────────
+
+enum OfferStatus {
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model Offer {
+  id          String      @id @default(cuid())
+  searchId    String?
+  search      Search?     @relation(fields: [searchId], references: [id], onDelete: SetNull)
+  listingId   String?
+  listing     Listing?    @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  sellerId    String
+  seller      User        @relation("OffersBySeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  price       Int
+  message     String
+  status      OfferStatus @default(SENT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  images      OfferImage[]
+  transaction Transaction?
+
+  @@index([sellerId])
+  @@index([searchId, status])
+}
+
+model OfferImage {
+  id      String @id @default(cuid())
+  offerId String
+  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  url     String
+  order   Int    @default(0)
+}
+
+// ─────────────────────────────── Transactions & payments ───────────────────────────────
+
+enum TransactionState {
+  OFFER_ACCEPTED
+  CONTACT_FEE_PENDING
+  PAYMENT_PROCESSING
+  PAYMENT_COMPLETED
+  CHAT_UNLOCKED
+  DEAL_IN_PROGRESS
+  WAITING_FOR_COMPLETION
+  COMPLETED
+  CANCELLED
+  REFUND_PENDING
+  REFUNDED
+  DISPUTED
+  FAILED
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  offerId           String            @unique
+  offer             Offer             @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  buyerId           String
+  buyer             User              @relation("TransactionsAsBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId          String
+  seller            User              @relation("TransactionsAsSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  amount            Int
+  currency          String            @default("SEK")
+  state             TransactionState  @default(OFFER_ACCEPTED)
+  contactFeeWaived  Boolean           @default(false)
+  buyerConfirmedAt  DateTime?
+  sellerConfirmedAt DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  events      TransactionEvent[]
+  contactFee  ContactFee?
+  conversation Conversation?
+  reviews     Review[]
+  disputes    Dispute[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([state])
+}
+
+model TransactionEvent {
+  id            String            @id @default(cuid())
+  transactionId String
+  transaction   Transaction       @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  fromState     TransactionState?
+  toState       TransactionState
+  note          String?
+  createdAt     DateTime          @default(now())
+
+  @@index([transactionId])
+}
+
+enum ContactFeeStatus {
+  PENDING
+  PAID
+  WAIVED_PLUS
+  FAILED
+  REFUNDED
+}
+
+model ContactFee {
+  id                    String           @id @default(cuid())
+  transactionId         String           @unique
+  transaction           Transaction      @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  amount                Int
+  currency              String           @default("SEK")
+  status                ContactFeeStatus @default(PENDING)
+  stripeCheckoutSessionId String?        @unique
+  stripePaymentIntentId String?          @unique
+  createdAt             DateTime         @default(now())
+  paidAt                DateTime?
+
+  refund Refund?
+}
+
+enum SubscriptionStatus {
+  CREATED
+  PAYMENT_PROCESSING
+  ACTIVE
+  PAYMENT_FAILED
+  PAST_DUE
+  CANCEL_AT_PERIOD_END
+  CANCELLED
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String?            @unique
+  stripeCustomerId     String?
+  status               SubscriptionStatus @default(CREATED)
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+enum PaymentType {
+  CONTACT_FEE
+  SUBSCRIPTION
+}
+
+model Payment {
+  id                String      @id @default(cuid())
+  userId            String
+  type              PaymentType
+  stripeObjectId    String      @unique
+  amount            Int
+  currency          String      @default("SEK")
+  status            String
+  raw               Json
+  createdAt         DateTime    @default(now())
+
+  @@index([userId])
+}
+
+enum RefundStatus {
+  PENDING
+  REFUNDED
+  REJECTED
+}
+
+model Refund {
+  id           String       @id @default(cuid())
+  contactFeeId String       @unique
+  contactFee   ContactFee   @relation(fields: [contactFeeId], references: [id], onDelete: Cascade)
+  amount       Int
+  reason       String
+  status       RefundStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+}
+
+model Dispute {
+  id            String        @id @default(cuid())
+  transactionId String
+  transaction   Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  reason        String
+  status        DisputeStatus @default(OPEN)
+  createdAt     DateTime      @default(now())
+  resolvedAt    DateTime?
+
+  @@index([transactionId])
+}
+
+// ─────────────────────────────── Chat ───────────────────────────────
+
+model Conversation {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  messages Message[]
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  type           MessageType @default(TEXT)
+  content        String?
+  mediaUrl       String?
+  createdAt      DateTime    @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// ─────────────────────────────── Reviews ───────────────────────────────
+
+model Review {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  authorId      String
+  author        User        @relation("ReviewsAuthored", fields: [authorId], references: [id], onDelete: Cascade)
+  targetId      String
+  target        User        @relation("ReviewsReceived", fields: [targetId], references: [id], onDelete: Cascade)
+  rating        Int
+  comment       String?
+  createdAt     DateTime    @default(now())
+
+  @@unique([transactionId, authorId])
+  @@index([targetId])
+}
+
+// ─────────────────────────────── Notifications, moderation, blocks ───────────────────────────────
+
+enum NotificationType {
+  NEW_OFFER
+  OFFER_ACCEPTED
+  CONTACT_FEE_REQUIRED
+  PAYMENT_COMPLETED
+  CHAT_UNLOCKED
+  NEW_MATCH
+  TRANSACTION_UPDATED
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  reporterId String
+  reporter   User         @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType String
+  targetId   String
+  reason     String
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+
+  @@index([status])
+}
+
+model ModerationAction {
+  id           String   @id @default(cuid())
+  moderatorId  String
+  targetType   String
+  targetId     String
+  action       String
+  note         String?
+  createdAt    DateTime @default(now())
+}
+
+model UserBlock {
+  id        String @id @default(cuid())
+  blockerId String
+  blocker   User   @relation("BlocksInitiated", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User   @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+}
+
+// ─────────────────────────────── External sources ───────────────────────────────
+
+enum AvailabilityStatus {
+  AVAILABLE
+  SOLD
+  UNKNOWN
+}
+
+model ExternalResult {
+  id                 String             @id @default(cuid())
+  searchId           String?
+  search             Search?            @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  source             String
+  sourceItemId       String
+  title              String
+  description        String?
+  price              Int?
+  currency           String             @default("SEK")
+  imageUrl           String?
+  itemUrl            String
+  brand              String?
+  model              String?
+  condition          String?
+  location           String?
+  productType        ItemType?
+  matchScore         Float?
+  availabilityStatus AvailabilityStatus @default(UNKNOWN)
+  retrievedAt        DateTime           @default(now())
+
+  @@unique([source, sourceItemId])
+  @@index([searchId])
+}
+
+// ─────────────────────────────── System, audit, analytics ───────────────────────────────
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  type      String
+  userId    String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+}
