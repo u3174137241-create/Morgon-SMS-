@@ -84,6 +84,7 @@ enum ItemType {
 
 enum SearchStatus {
   ACTIVE
+  PAUSED
   FULFILLED
   EXPIRED
   CANCELLED

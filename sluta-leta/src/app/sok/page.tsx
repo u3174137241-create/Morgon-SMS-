@@ -24,7 +24,8 @@ function CreateSearchForm() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.error ?? "Något gick fel.");
-    router.push(`/sok/${data.search.id}`);
+    const notified = data.notifiedSellers ?? 0;
+    router.push(`/sok/${data.search.id}${notified > 0 ? `?notified=${notified}` : ""}`);
   }
 
   return (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import NotificationsBell from "./NotificationsBell";
 
 const LINKS = [
   { href: "/", label: "Hem" },
@@ -34,9 +35,12 @@ export default function NavBar() {
         </nav>
         <div className="flex items-center gap-3">
           {user === undefined ? null : user ? (
-            <Link href={`/profil/${user.id}`} className="text-sm font-medium text-kungsbla-600">
-              {user.name}
-            </Link>
+            <>
+              <NotificationsBell userId={user.id} />
+              <Link href={`/profil/${user.id}`} className="text-sm font-medium text-kungsbla-600">
+                {user.name}
+              </Link>
+            </>
           ) : (
             <Link href="/logga-in" className="btn-primary !px-4 !py-1.5 text-xs">
               Logga in

@@ -23,17 +23,25 @@ const TABS = [
 
 export default function ExplorePage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("ALL");
+  const [budgetMax, setBudgetMax] = useState("");
+  const [location, setLocation] = useState("");
   const [items, setItems] = useState<SearchListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const qs = tab === "ALL" ? "" : `?type=${tab}`;
-    fetch(`/api/searches${qs}`)
-      .then((r) => r.json())
-      .then((d) => setItems(d.searches ?? []))
-      .finally(() => setLoading(false));
-  }, [tab]);
+    const params = new URLSearchParams();
+    if (tab !== "ALL") params.set("type", tab);
+    if (budgetMax) params.set("budgetMax", budgetMax);
+    if (location.trim()) params.set("location", location.trim());
+    const timeout = setTimeout(() => {
+      fetch(`/api/searches?${params.toString()}`)
+        .then((r) => r.json())
+        .then((d) => setItems(d.searches ?? []))
+        .finally(() => setLoading(false));
+    }, 250);
+    return () => clearTimeout(timeout);
+  }, [tab, budgetMax, location]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,6 +58,21 @@ export default function ExplorePage() {
             {t.label}
           </button>
         ))}
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          className="input sm:max-w-40"
+          type="number"
+          placeholder="Max budget (kr)"
+          value={budgetMax}
+          onChange={(e) => setBudgetMax(e.target.value)}
+        />
+        <input
+          className="input sm:max-w-56"
+          placeholder="Plats (t.ex. Stockholm)"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        />
       </div>
 
       {loading ? (

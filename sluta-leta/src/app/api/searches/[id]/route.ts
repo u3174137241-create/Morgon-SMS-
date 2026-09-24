@@ -32,7 +32,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (search.userId !== user.id) return jsonError("Du äger inte den här sökningen.", 403);
 
   const body = await req.json().catch(() => ({}));
-  const allowedStatuses = new Set(["FULFILLED", "CANCELLED"]);
+  const allowedStatuses = new Set(["FULFILLED", "CANCELLED", "PAUSED", "ACTIVE"]);
   if (typeof body.status === "string" && allowedStatuses.has(body.status)) {
     const updated = await prisma.search.update({ where: { id }, data: { status: body.status } });
     return jsonOk({ search: updated });

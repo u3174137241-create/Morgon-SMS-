@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import ImageUploader from "@/app/components/ImageUploader";
 
@@ -34,9 +34,11 @@ type SearchDetail = {
   offers: Offer[];
 };
 
-export default function SearchDetailPage() {
+function SearchDetailContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const notifiedSellers = Number(searchParams.get("notified")) || 0;
   const { user } = useCurrentUser();
   const [search, setSearch] = useState<SearchDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +91,15 @@ export default function SearchDetailPage() {
     if (res.ok) load();
   }
 
+  async function updateSearch(body: Record<string, unknown>) {
+    const res = await fetch(`/api/searches/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) load();
+  }
+
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!search) return <p className="text-sm text-gray-400">Laddar…</p>;
 
@@ -96,6 +107,11 @@ export default function SearchDetailPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      {notifiedSellers > 0 && (
+        <p className="rounded-xl bg-guld-400/10 p-3 text-sm text-guld-500">
+          Klart! {notifiedSellers} säljare som redan har något liknande har notifierats direkt.
+        </p>
+      )}
       <div className="card flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-kungsbla-700">{search.user.name} söker</h1>
@@ -110,6 +126,36 @@ export default function SearchDetailPage() {
         )}
         <p className="text-sm text-gray-700">{search.description}</p>
         {search.budgetMax && <p className="text-sm font-semibold text-kungsbla-600">Budget: max {search.budgetMax} kr</p>}
+        {isOwner && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+            <span className="text-xs font-medium text-gray-400">Status: {search.status}</span>
+            <div className="ml-auto flex flex-wrap gap-2">
+              {search.status === "ACTIVE" && (
+                <button className="btn-secondary !px-3 !py-1 text-xs" onClick={() => updateSearch({ status: "PAUSED" })}>
+                  Pausa
+                </button>
+              )}
+              {search.status === "PAUSED" && (
+                <button className="btn-secondary !px-3 !py-1 text-xs" onClick={() => updateSearch({ status: "ACTIVE" })}>
+                  Återaktivera
+                </button>
+              )}
+              {["ACTIVE", "PAUSED"].includes(search.status) && (
+                <>
+                  <button className="btn-secondary !px-3 !py-1 text-xs" onClick={() => updateSearch({ extend: true })}>
+                    Förläng 30 dagar
+                  </button>
+                  <button className="btn-secondary !px-3 !py-1 text-xs" onClick={() => updateSearch({ status: "FULFILLED" })}>
+                    Markera hittad
+                  </button>
+                  <button className="btn-secondary !px-3 !py-1 text-xs" onClick={() => updateSearch({ status: "CANCELLED" })}>
+                    Avsluta
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div>
@@ -192,5 +238,13 @@ export default function SearchDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchDetailPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-gray-400">Laddar…</p>}>
+      <SearchDetailContent />
+    </Suspense>
   );
 }

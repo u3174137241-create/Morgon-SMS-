@@ -7,12 +7,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user || user.status !== "ACTIVE") return jsonError("Hittades inte.", 404);
 
-  const reviews = await prisma.review.findMany({
-    where: { targetId: id },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    include: { author: { select: { name: true, avatarUrl: true } } },
-  });
+  const [reviews, activeSearches] = await Promise.all([
+    prisma.review.findMany({
+      where: { targetId: id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      include: { author: { select: { name: true, avatarUrl: true } } },
+    }),
+    prisma.search.findMany({
+      where: { userId: id, status: { in: ["ACTIVE", "PAUSED"] }, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, title: true, budgetMax: true, location: true, status: true },
+    }),
+  ]);
 
-  return jsonOk({ profile: publicProfile(user), reviews });
+  return jsonOk({ profile: publicProfile(user), reviews, activeSearches });
 }

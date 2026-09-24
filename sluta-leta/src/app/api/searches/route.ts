@@ -4,21 +4,30 @@ import { jsonError, jsonOk } from "@/lib/http";
 import { createSearchSchema } from "@/lib/validation";
 import { parseSearchText } from "@/lib/nlpParse";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rateLimit";
+import { notifyMatchingSellersForSearch } from "@/lib/notifyMatchingSellers";
+import type { Prisma } from "@prisma/client";
 
 const SEARCH_TTL_DAYS = 30;
 
 // GET /api/searches — "Sökes just nu", köpare betalar aldrig för detta.
+// Stöder enkla filter: typ, maxbudget och plats — hålls medvetet enkelt.
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const type = url.searchParams.get("type");
+  const budgetMax = Number(url.searchParams.get("budgetMax"));
+  const location = url.searchParams.get("location")?.trim();
   const limit = Math.min(50, Number(url.searchParams.get("limit")) || 20);
 
+  const where: Prisma.SearchWhereInput = {
+    status: "ACTIVE",
+    expiresAt: { gt: new Date() },
+    ...(type === "PRODUCT" || type === "SERVICE" ? { type } : {}),
+    ...(Number.isFinite(budgetMax) && budgetMax > 0 ? { budgetMax: { lte: budgetMax } } : {}),
+    ...(location ? { location: { contains: location, mode: "insensitive" } } : {}),
+  };
+
   const searches = await prisma.search.findMany({
-    where: {
-      status: "ACTIVE",
-      expiresAt: { gt: new Date() },
-      ...(type === "PRODUCT" || type === "SERVICE" ? { type } : {}),
-    },
+    where,
     orderBy: { createdAt: "desc" },
     take: limit,
     include: {
@@ -86,5 +95,9 @@ export async function POST(req: Request) {
     include: { images: true },
   });
 
-  return jsonOk({ search }, 201);
+  // Proaktiv matchning: notifiera säljare som redan har något som matchar,
+  // så de inte behöver hitta sökningen själva genom att bläddra.
+  const notifiedSellers = await notifyMatchingSellersForSearch(search);
+
+  return jsonOk({ search, notifiedSellers }, 201);
 }
