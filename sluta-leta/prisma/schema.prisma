@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────── Users & auth ───────────────────────────────
+// --- Users & auth ---
 
 model User {
   id                String    @id @default(cuid())
@@ -75,7 +75,7 @@ model PasswordResetToken {
   @@index([userId])
 }
 
-// ─────────────────────────────── Searches (efterlysningar) ───────────────────────────────
+// --- Searches (efterlysningar) ---
 
 enum ItemType {
   PRODUCT
@@ -124,7 +124,7 @@ model SearchImage {
   order    Int    @default(0)
 }
 
-// ─────────────────────────────── Listings (Hitta köpare) ───────────────────────────────
+// --- Listings (Hitta köpare) ---
 
 enum ListingStatus {
   ACTIVE
@@ -163,7 +163,7 @@ model ListingImage {
   order     Int     @default(0)
 }
 
-// ─────────────────────────────── Offers ───────────────────────────────
+// --- Offers ---
 
 enum OfferStatus {
   SENT
@@ -201,7 +201,7 @@ model OfferImage {
   order   Int    @default(0)
 }
 
-// ─────────────────────────────── Transactions & payments ───────────────────────────────
+// --- Transactions & payments ---
 
 enum TransactionState {
   OFFER_ACCEPTED
@@ -359,7 +359,7 @@ model Dispute {
   @@index([transactionId])
 }
 
-// ─────────────────────────────── Chat ───────────────────────────────
+// --- Chat ---
 
 model Conversation {
   id            String   @id @default(cuid())
@@ -390,7 +390,7 @@ model Message {
   @@index([conversationId, createdAt])
 }
 
-// ─────────────────────────────── Reviews ───────────────────────────────
+// --- Reviews ---
 
 model Review {
   id            String      @id @default(cuid())
@@ -408,7 +408,7 @@ model Review {
   @@index([targetId])
 }
 
-// ─────────────────────────────── Notifications, moderation, blocks ───────────────────────────────
+// --- Notifications, moderation, blocks ---
 
 enum NotificationType {
   NEW_OFFER
@@ -472,7 +472,7 @@ model UserBlock {
   @@unique([blockerId, blockedId])
 }
 
-// ─────────────────────────────── System, audit, analytics ───────────────────────────────
+// --- System, audit, analytics ---
 
 model SystemSetting {
   key       String   @id
