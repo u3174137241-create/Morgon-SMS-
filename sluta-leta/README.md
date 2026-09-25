@@ -68,11 +68,6 @@ standardrollen `postgres`), `SESSION_SECRET`, `APP_BASE_URL`.
 
 ## Vad är medvetet stubbat
 
-- **Externa källor** (Blocket, Tradera, Facebook Marketplace, Vinted, Sellpy,
-  Plick): adapterarkitekturen (`src/lib/externalSources/`) är klar och körs
-  parallellt med timeout/felisolering per källa, men varje adapter rapporterar
-  ärligt `unavailable` tills en riktig API-nyckel/partneravtal finns — ingen
-  scraping eller kringgående av bot-skydd.
 - **E-post**: utan `RESEND_API_KEY` loggas verifierings-/återställningslänkar
   till servern istället för att skickas.
 - **Bilduppladdning**: utan S3-variabler sparas bilder lokalt på disk

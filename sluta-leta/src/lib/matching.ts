@@ -1,6 +1,6 @@
 // Hybrid matchning mellan en efterlysning (köparens krav) och en kandidat
-// (en säljares listing, externt resultat, eller tvärtom). Hårda krav filtrerar
-// bort kandidater helt; mjuka preferenser påverkar bara poängen.
+// (en säljares listing, eller tvärtom). Hårda krav filtrerar bort kandidater
+// helt; mjuka preferenser påverkar bara poängen.
 
 export type MatchRequirements = {
   itemType: "PRODUCT" | "SERVICE";

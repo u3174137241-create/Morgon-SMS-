@@ -110,9 +110,8 @@ model Search {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  images          SearchImage[]
-  offers          Offer[]
-  externalResults ExternalResult[]
+  images SearchImage[]
+  offers Offer[]
 
   @@index([status, expiresAt])
   @@index([type, category])
@@ -472,39 +471,6 @@ model UserBlock {
   createdAt DateTime @default(now())
 
   @@unique([blockerId, blockedId])
-}
-
-// ─────────────────────────────── External sources ───────────────────────────────
-
-enum AvailabilityStatus {
-  AVAILABLE
-  SOLD
-  UNKNOWN
-}
-
-model ExternalResult {
-  id                 String             @id @default(cuid())
-  searchId           String?
-  search             Search?            @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  source             String
-  sourceItemId       String
-  title              String
-  description        String?
-  price              Int?
-  currency           String             @default("SEK")
-  imageUrl           String?
-  itemUrl            String
-  brand              String?
-  model              String?
-  condition          String?
-  location           String?
-  productType        ItemType?
-  matchScore         Float?
-  availabilityStatus AvailabilityStatus @default(UNKNOWN)
-  retrievedAt        DateTime           @default(now())
-
-  @@unique([source, sourceItemId])
-  @@index([searchId])
 }
 
 // ─────────────────────────────── System, audit, analytics ───────────────────────────────
