@@ -18,6 +18,28 @@ npm run dev
 Kräver en PostgreSQL-databas. `DATABASE_URL` i `.env.example` pekar mot en
 lokal instans (`postgresql://postgres:devpassword@localhost:5432/slutaleta`).
 
+## Produktionsdrift
+
+Live-preview: **https://sluta-leta.vercel.app** (Vercel + Supabase Postgres).
+
+Demokonto (redan e-postverifierat, inget att vänta på):
+- E-post: `demo@slutaleta.se`
+- Lösenord: `SlutaLeta2026!`
+
+Två produktionsspecifika buggar hittades och fixades under driftsättningen
+(ingen av dem syntes lokalt eftersom `node_modules` redan fanns och Next
+inte körde en helt färsk installation):
+- **CVE-2025-66478**: Next 16.3.5 blockerades av Vercels säkerhetsgrind vid
+  varje deploy. Löst genom uppgradering till 16.3.6 (patchversionen).
+- **`prisma generate` kördes inte pålitligt** som postinstall-hook i Vercels
+  byggmiljö, vilket fick `next build` att misslyckas så fort någon route
+  importerade `@prisma/client`. Löst genom att köra det explicit:
+  `"build": "prisma generate && next build"`.
+
+Miljövariabler satta i Vercel-projektet: `DATABASE_URL` (Supabase
+transaction pooler, port 6543, dedikerad roll `slutaleta_app` — inte
+standardrollen `postgres`), `SESSION_SECRET`, `APP_BASE_URL`.
+
 ## Vad är riktigt implementerat
 
 - **Auth**: e-post + lösenord, bcrypt-hash, signerade sessionscookies,
