@@ -2,12 +2,14 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser, publicProfile } from "@/lib/auth";
 import { clearSessionCookie } from "@/lib/session";
 import { jsonError, jsonOk } from "@/lib/http";
+import { isPlusActive } from "@/lib/plus";
 import crypto from "crypto";
 
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return jsonOk({ user: null });
-  return jsonOk({ user: { ...publicProfile(user), email: user.email, isAdmin: user.isAdmin } });
+  const isPlus = await isPlusActive(user.id);
+  return jsonOk({ user: { ...publicProfile(user), email: user.email, isAdmin: user.isAdmin, isPlus } });
 }
 
 // GDPR: konto raderas (mjukt) — e-post/lösenord anonymiseras så inloggning

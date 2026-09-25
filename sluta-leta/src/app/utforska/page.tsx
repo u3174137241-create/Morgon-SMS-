@@ -45,7 +45,12 @@ export default function ExplorePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-kungsbla-700">Utforska</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-kungsbla-700">Sökes just nu</h1>
+        <p className="mt-1 text-sm text-gray-400">
+          Scrolla bland vad andra vill köpa — har du det? Lämna ett erbjudande.
+        </p>
+      </div>
       <div className="flex gap-2">
         {TABS.map((t) => (
           <button
@@ -78,7 +83,13 @@ export default function ExplorePage() {
       {loading ? (
         <p className="text-sm text-gray-400">Laddar…</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-gray-400">Inget att visa just nu.</p>
+        <div className="flex flex-col items-center gap-1 py-16 text-center">
+          <p className="text-sm font-medium text-gray-500">Inga sökningar</p>
+          <p className="text-xs text-gray-400">Bli först att publicera vad du letar efter.</p>
+          <Link href="/" className="btn-primary mt-3 !px-5 !py-2 text-xs">
+            Skapa sökning
+          </Link>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((s) => (

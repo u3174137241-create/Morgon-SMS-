@@ -50,7 +50,20 @@ export default function MessagesListPage() {
       {loading ? (
         <p className="text-sm text-gray-400">Laddar…</p>
       ) : transactions.length === 0 ? (
-        <p className="text-sm text-gray-400">Inga affärer än.</p>
+        <div className="flex flex-col items-center gap-2 py-16 text-center">
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="h-10 w-10 text-gray-300">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9A1.5 1.5 0 0 1 18.5 16H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5v-9Z" />
+          </svg>
+          <p className="text-sm font-medium text-gray-500">Inga meddelanden ännu</p>
+          <p className="max-w-xs text-xs text-gray-400">
+            Konversationer startas när du accepterar ett erbjudande
+          </p>
+          {user && (
+            <Link href={`/profil/${user.id}`} className="btn-primary mt-2 !px-5 !py-2 text-xs">
+              Mina önskemål
+            </Link>
+          )}
+        </div>
       ) : (
         <div className="flex flex-col gap-2">
           {transactions.map((t) => {

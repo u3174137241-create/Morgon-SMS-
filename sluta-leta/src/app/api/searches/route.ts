@@ -72,8 +72,6 @@ export async function POST(req: Request) {
   if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata", 400);
   const { text, images } = parsed.data;
 
-  if (images.length === 0) return jsonError("Minst en bild krävs för en sökning.", 400);
-
   const req_ = parseSearchText(text);
 
   const search = await prisma.search.create({

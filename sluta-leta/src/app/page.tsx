@@ -39,7 +39,7 @@ export default function HomePage() {
   function goCreateSearch(e: React.FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams({ text: describeText });
-    router.push(`/sok?${params.toString()}`);
+    router.push(`/sok/ny?${params.toString()}`);
   }
 
   return (

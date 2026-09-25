@@ -9,6 +9,7 @@ export type CurrentUser = {
   avatarUrl: string | null;
   verified: boolean;
   isAdmin: boolean;
+  isPlus: boolean;
   ratingAvg: number | null;
   ratingCount: number;
   dealsCompleted: number;

@@ -1,67 +1,78 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import ImageUploader from "@/app/components/ImageUploader";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
-function CreateSearchForm() {
-  const params = useSearchParams();
-  const router = useRouter();
-  const [text, setText] = useState(params.get("text") ?? "");
-  const [images, setImages] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+type SearchListItem = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  budgetMax: number | null;
+  user: { name: string; verified: boolean };
+};
+
+export default function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [items, setItems] = useState<SearchListItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
     setLoading(true);
-    setError(null);
-    const res = await fetch("/api/searches", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, images }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) return setError(data.error ?? "Något gick fel.");
-    const notified = data.notifiedSellers ?? 0;
-    router.push(`/sok/${data.search.id}${notified > 0 ? `?notified=${notified}` : ""}`);
-  }
+    const timeout = setTimeout(() => {
+      fetch("/api/searches")
+        .then((r) => r.json())
+        .then((d) => setItems(d.searches ?? []))
+        .finally(() => setLoading(false));
+    }, 200);
+    return () => clearTimeout(timeout);
+  }, []);
 
-  return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Beskriv vad du söker</label>
-        <textarea
-          className="input min-h-28"
-          placeholder="T.ex. 'Jag söker en begagnad iPhone 15 Pro, max 7000 kr, Stockholm.'"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          required
-        />
-        <p className="mt-1 text-xs text-gray-400">
-          Vi läser automatiskt ut budget, plats och typ av produkt eller tjänst ur din text.
-        </p>
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Bilder (minst en)</label>
-        <ImageUploader images={images} onChange={setImages} />
-      </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button className="btn-primary w-fit" type="submit" disabled={loading}>
-        {loading ? "Skapar…" : "Skapa sökning — gratis"}
-      </button>
-    </form>
-  );
-}
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? items.filter((s) => s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.location.toLowerCase().includes(q))
+    : items;
 
-export default function CreateSearchPage() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
-      <h1 className="text-2xl font-bold text-kungsbla-700">Vad letar du efter?</h1>
-      <Suspense fallback={null}>
-        <CreateSearchForm />
-      </Suspense>
+      <h1 className="text-2xl font-bold text-kungsbla-700">Sök</h1>
+      <input
+        className="input"
+        placeholder="Sök bland sökningar…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <p className="text-xs text-gray-400">
+        Sökning letar bara bland befintliga efterlysningar. Vill du skapa en egen? Gå till{" "}
+        <Link href="/" className="font-medium text-kungsbla-600 hover:underline">
+          Hem
+        </Link>
+        .
+      </p>
+
+      {loading ? (
+        <p className="text-sm text-gray-400">Laddar…</p>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center gap-1 py-12 text-center">
+          <p className="text-sm font-medium text-gray-500">Inga sökningar</p>
+          <p className="text-xs text-gray-400">
+            {q ? "Inget matchade din sökning." : "Bli först att publicera vad du letar efter."}
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((s) => (
+            <Link key={s.id} href={`/sok/${s.id}`} className="card flex items-center justify-between hover:shadow-md">
+              <div>
+                <p className="line-clamp-1 text-sm font-medium text-kungsbla-700">{s.title}</p>
+                <p className="text-xs text-gray-400">
+                  {s.location} {s.budgetMax ? `· max ${s.budgetMax} kr` : ""}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
