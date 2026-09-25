@@ -39,9 +39,10 @@ export default function HomePage() {
     <div className="flex flex-col gap-8">
       <section className="flex flex-col items-center gap-3 py-4 text-center">
         <p className="text-xs font-bold uppercase tracking-wider text-guld-500">Sluta Leta</p>
-        <h1 className="text-3xl font-bold text-gray-900">Vad vill du köpa?</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Sluta leta. Låt säljare hitta dig.</h1>
         <p className="max-w-xs text-sm text-gray-500">
-          Beskriv vad du letar efter — säljare hittar dig och lämnar erbjudanden.
+          Skriv vad du vill köpa och till vilket pris. Säljare som har det hör av sig direkt till
+          dig — du slipper leta själv. Helt gratis för dig som köpare.
         </p>
 
         <div className="mt-3 flex w-full max-w-sm flex-col gap-3">
@@ -56,6 +57,22 @@ export default function HomePage() {
             Se sökningar
           </Link>
         </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          { step: "1", title: "Skriv vad du söker", text: "T.ex. ”en cykel, max 1000 kr, Stockholm”." },
+          { step: "2", title: "Säljare hör av sig", text: "De som har det du letar efter skickar ett erbjudande till dig." },
+          { step: "3", title: "Du väljer", text: "Ingen köptvång. Tackar du ja betalar säljaren en liten avgift — inte du." },
+        ].map((s) => (
+          <div key={s.step} className="card flex flex-col gap-1">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-kungsbla-50 text-xs font-bold text-kungsbla-600">
+              {s.step}
+            </span>
+            <p className="text-sm font-semibold text-kungsbla-700">{s.title}</p>
+            <p className="text-xs text-gray-500">{s.text}</p>
+          </div>
+        ))}
       </section>
 
       <section>

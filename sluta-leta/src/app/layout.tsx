@@ -7,11 +7,13 @@ const APP_URL = process.env.APP_BASE_URL ?? "https://sluta-leta.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
-  title: "Sluta Leta",
-  description: "Sluta leta. Låt säljarna hitta dig.",
+  title: "Sluta Leta — beskriv vad du söker, säljare hör av sig",
+  description:
+    "Sluta Leta är en marknadsplats där du som köpare skriver vad du vill ha. Säljare som har det du söker hör av sig till dig med ett erbjudande — gratis för köpare.",
   openGraph: {
     title: "Sluta Leta",
-    description: "Beskriv vad du letar efter — säljare hittar dig och lämnar erbjudanden.",
+    description:
+      "Skriv vad du vill köpa. Säljare som har det hör av sig till dig — du slipper leta själv.",
     url: APP_URL,
     siteName: "Sluta Leta",
     locale: "sv_SE",
