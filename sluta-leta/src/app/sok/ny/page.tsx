@@ -4,10 +4,15 @@ import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ImageUploader from "@/app/components/ImageUploader";
 
+const CONDITIONS = ["Spelar ingen roll", "Ny", "Begagnad", "Renoveringsobjekt"] as const;
+
 function CreateSearchForm() {
   const params = useSearchParams();
   const router = useRouter();
   const [text, setText] = useState(params.get("text") ?? "");
+  const [condition, setCondition] = useState<(typeof CONDITIONS)[number]>("Spelar ingen roll");
+  const [budgetMax, setBudgetMax] = useState("");
+  const [location, setLocation] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +24,13 @@ function CreateSearchForm() {
     const res = await fetch("/api/searches", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, images }),
+      body: JSON.stringify({
+        text,
+        images,
+        condition: condition === "Spelar ingen roll" ? undefined : condition,
+        budgetMax: budgetMax ? Number(budgetMax) : undefined,
+        location: location.trim() || undefined,
+      }),
     });
     const data = await res.json();
     setLoading(false);
@@ -40,9 +51,43 @@ function CreateSearchForm() {
           required
         />
         <p className="mt-1 text-xs text-gray-400">
-          Vi läser automatiskt ut budget, plats och typ av produkt eller tjänst ur din text.
+          Skriv precis som du vill — vi skapar alltid en sökning av texten. Vill du vara extra
+          tydlig kan du också välja skick, budget och plats nedan.
         </p>
       </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Skick</label>
+          <select className="input" value={condition} onChange={(e) => setCondition(e.target.value as (typeof CONDITIONS)[number])}>
+            {CONDITIONS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Budget (max kr)</label>
+          <input
+            className="input"
+            type="number"
+            placeholder="T.ex. 7000"
+            value={budgetMax}
+            onChange={(e) => setBudgetMax(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Plats</label>
+          <input
+            className="input"
+            placeholder="T.ex. Stockholm"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">Bilder (valfritt)</label>
         <ImageUploader images={images} onChange={setImages} />

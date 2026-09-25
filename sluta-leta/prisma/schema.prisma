@@ -79,7 +79,6 @@ model PasswordResetToken {
 
 enum ItemType {
   PRODUCT
-  SERVICE
 }
 
 enum SearchStatus {

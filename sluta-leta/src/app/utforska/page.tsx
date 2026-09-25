@@ -7,7 +7,7 @@ type SearchListItem = {
   id: string;
   title: string;
   description: string;
-  type: "PRODUCT" | "SERVICE";
+  type: "PRODUCT";
   budgetMax: number | null;
   location: string;
   image: string | null;
@@ -18,7 +18,6 @@ type SearchListItem = {
 const TABS = [
   { key: "ALL", label: "Alla" },
   { key: "PRODUCT", label: "Produkter" },
-  { key: "SERVICE", label: "Tjänster" },
 ] as const;
 
 export default function ExplorePage() {

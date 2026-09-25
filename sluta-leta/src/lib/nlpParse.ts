@@ -1,9 +1,11 @@
 // Regelbaserad tolkning av fri text på svenska till strukturerade sökkrav.
 // Detta är medvetet enkelt (ingen extern NLU-tjänst är konfigurerad) men täcker
-// de vanligaste mönstren: pris/budget, plats, skick och produkt/tjänst-typ.
+// de vanligaste mönstren: pris/budget, plats och skick. Fälten här är bara en
+// utgångspunkt — köparen kan alltid välja skick, budget och plats explicit i
+// formuläret, och de valen vinner alltid över vad som tolkas ur fritexten.
 
 export type ParsedRequirements = {
-  itemType: "PRODUCT" | "SERVICE";
+  itemType: "PRODUCT";
   budgetMax: number | null;
   budgetMin: number | null;
   location: string | null;
@@ -16,13 +18,6 @@ const SWEDISH_CITIES = [
   "helsingborg", "jönköping", "norrköping", "lund", "umeå", "gävle", "borås",
   "södertälje", "eskilstuna", "halmstad", "växjö", "karlstad", "sundsvall",
   "haninge", "täby", "kungsbacka", "solna", "huddinge", "nacka",
-];
-
-const SERVICE_KEYWORDS = [
-  "renovera", "renovering", "måla", "målning", "elektriker", "vvs", "städ",
-  "städning", "fönsterputs", "gräsklippning", "lackering", "plåt", "snickeri",
-  "transport", "flytt", "montering", "fotografering", "installera", "installation",
-  "reparera", "reparation", "laga", "bygga",
 ];
 
 const STOPWORDS = new Set([
@@ -42,8 +37,6 @@ function parsePriceSek(text: string): number | null {
 export function parseSearchText(rawText: string): ParsedRequirements {
   const text = rawText.trim();
   const lower = text.toLowerCase();
-
-  const isService = SERVICE_KEYWORDS.some((kw) => lower.includes(kw));
 
   let budgetMax: number | null = null;
   const maxMatch = lower.match(/max(?:imalt)?\s*[:\-]?\s*([\d\s]{2,10})\s*(?:kr|:-|sek)?/i);
@@ -80,7 +73,7 @@ export function parseSearchText(rawText: string): ParsedRequirements {
   ).slice(0, 15);
 
   return {
-    itemType: isService ? "SERVICE" : "PRODUCT",
+    itemType: "PRODUCT",
     budgetMax,
     budgetMin,
     location,

@@ -27,19 +27,6 @@ describe("scoreMatch", () => {
     expect(result.passesHardRequirements).toBe(false);
   });
 
-  it("rejects mismatched item types", () => {
-    const candidate: MatchCandidate = {
-      itemType: "SERVICE",
-      price: 500,
-      location: "Stockholm",
-      brand: null,
-      model: null,
-      condition: null,
-      text: "Målning",
-    };
-    expect(scoreMatch(baseReq, candidate).passesHardRequirements).toBe(false);
-  });
-
   it("scores a strong match higher than a weak one", () => {
     const strong: MatchCandidate = {
       itemType: "PRODUCT",

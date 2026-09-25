@@ -3,7 +3,7 @@
 // helt; mjuka preferenser påverkar bara poängen.
 
 export type MatchRequirements = {
-  itemType: "PRODUCT" | "SERVICE";
+  itemType: "PRODUCT";
   budgetMax: number | null;
   budgetMin: number | null;
   location: string | null;
@@ -14,7 +14,7 @@ export type MatchRequirements = {
 };
 
 export type MatchCandidate = {
-  itemType: "PRODUCT" | "SERVICE";
+  itemType: "PRODUCT";
   price: number | null;
   location: string | null;
   brand: string | null;

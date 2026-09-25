@@ -20,9 +20,15 @@ export const confirmPasswordResetSchema = z.object({
   password: z.string().min(8).max(200),
 });
 
+export const searchConditionSchema = z.enum(["Ny", "Begagnad", "Renoveringsobjekt"]);
+
 export const createSearchSchema = z.object({
   text: z.string().trim().min(3).max(2000),
   images: z.array(z.string().url()).max(10).default([]),
+  condition: searchConditionSchema.optional(),
+  budgetMin: z.number().int().positive().max(100_000_000).optional(),
+  budgetMax: z.number().int().positive().max(100_000_000).optional(),
+  location: z.string().trim().min(1).max(100).optional(),
 });
 
 export const createOfferSchema = z.object({

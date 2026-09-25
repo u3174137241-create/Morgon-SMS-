@@ -10,14 +10,9 @@ describe("parseSearchText", () => {
     expect(result.condition).toBe("Begagnad");
   });
 
-  it("classifies renovation requests as services", () => {
+  it("always classifies as product since services are not supported", () => {
     const result = parseSearchText("Jag behöver någon som kan renovera mitt badrum i Haninge.");
-    expect(result.itemType).toBe("SERVICE");
+    expect(result.itemType).toBe("PRODUCT");
     expect(result.location).toBe("Haninge");
-  });
-
-  it("classifies car painting as a service, not a product", () => {
-    const result = parseSearchText("Jag behöver någon som kan måla om min bil.");
-    expect(result.itemType).toBe("SERVICE");
   });
 });

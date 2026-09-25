@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   const where: Prisma.SearchWhereInput = {
     status: "ACTIVE",
     expiresAt: { gt: new Date() },
-    ...(type === "PRODUCT" || type === "SERVICE" ? { type } : {}),
+    ...(type === "PRODUCT" ? { type } : {}),
     ...(Number.isFinite(budgetMax) && budgetMax > 0 ? { budgetMax: { lte: budgetMax } } : {}),
     ...(location ? { location: { contains: location, mode: "insensitive" } } : {}),
   };
@@ -70,23 +70,37 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = createSearchSchema.safeParse(body);
   if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata", 400);
-  const { text, images } = parsed.data;
+  const { text, images, condition, budgetMin, budgetMax, location } = parsed.data;
 
-  const req_ = parseSearchText(text);
+  // Fritexten tolkas alltid till en giltig efterlysning, oavsett formulering —
+  // men skick, budget och plats som köparen väljer explicit i formuläret
+  // vinner alltid över vad som (eventuellt) går att gissa ur texten.
+  const parsedFromText = parseSearchText(text);
+  const finalCondition = condition ?? parsedFromText.condition;
+  const finalBudgetMin = budgetMin ?? parsedFromText.budgetMin;
+  const finalBudgetMax = budgetMax ?? parsedFromText.budgetMax;
+  const finalLocation = location ?? parsedFromText.location ?? "Okänd plats";
+  const requirements = {
+    ...parsedFromText,
+    condition: finalCondition,
+    budgetMin: finalBudgetMin,
+    budgetMax: finalBudgetMax,
+    location: finalLocation,
+  };
 
   const search = await prisma.search.create({
     data: {
       userId: user.id,
       title: text.slice(0, 120),
       description: text,
-      type: req_.itemType,
+      type: parsedFromText.itemType,
       brand: null,
       model: null,
-      condition: req_.condition,
-      budgetMin: req_.budgetMin,
-      budgetMax: req_.budgetMax,
-      location: req_.location ?? "Okänd plats",
-      requirements: req_,
+      condition: finalCondition,
+      budgetMin: finalBudgetMin,
+      budgetMax: finalBudgetMax,
+      location: finalLocation,
+      requirements,
       expiresAt: new Date(Date.now() + SEARCH_TTL_DAYS * 24 * 60 * 60 * 1000),
       images: { create: images.map((url, order) => ({ url, order })) },
     },

@@ -7,7 +7,7 @@ type SearchListItem = {
   id: string;
   title: string;
   description: string;
-  type: "PRODUCT" | "SERVICE";
+  type: "PRODUCT";
   budgetMax: number | null;
   location: string;
   image: string | null;
