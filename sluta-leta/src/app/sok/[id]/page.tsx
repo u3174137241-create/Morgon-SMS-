@@ -204,8 +204,7 @@ function SearchDetailContent() {
         </div>
         {isOwner && (
           <p className="mt-3 text-xs text-gray-400">
-            Säljaren betalar en liten kontaktavgift (eller inget om de har Sluta Leta Plus) för att få
-            tillgång till chatten när du trycker Ge åtkomst.
+            När du trycker Ge åtkomst öppnas chatten så att du och säljaren kan komma överens.
           </p>
         )}
       </div>

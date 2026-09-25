@@ -366,7 +366,7 @@ export default function ProfilePage() {
         </button>
       )}
 
-      <p className="pb-2 text-center text-xs text-gray-300">Sluta Leta · säljaren betalar kontaktavgift</p>
+      <p className="pb-2 text-center text-xs text-gray-300">Sluta Leta · beskriv vad du söker, säljare hör av sig</p>
     </div>
   );
 }
