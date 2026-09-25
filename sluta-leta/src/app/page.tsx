@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 type SearchListItem = {
   id: string;
@@ -16,10 +15,16 @@ type SearchListItem = {
   user: { id: string; name: string; avatarUrl: string | null; verified: boolean };
 };
 
+function CompassIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} stroke="currentColor" className="h-4 w-4">
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m14.8 9.2-1.9 5-5 1.9 1.9-5 5-1.9Z" />
+    </svg>
+  );
+}
+
 export default function HomePage() {
-  const router = useRouter();
-  const [describeText, setDescribeText] = useState("");
-  const [internalQuery, setInternalQuery] = useState("");
   const [searches, setSearches] = useState<SearchListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,49 +35,26 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = useMemo(() => {
-    if (!internalQuery.trim()) return searches;
-    const q = internalQuery.toLowerCase();
-    return searches.filter((s) => s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
-  }, [searches, internalQuery]);
-
-  function goCreateSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const params = new URLSearchParams({ text: describeText });
-    router.push(`/sok/ny?${params.toString()}`);
-  }
-
   return (
-    <div className="flex flex-col gap-12">
-      <section className="flex flex-col items-center gap-4 py-8 text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight text-kungsbla-700 sm:text-5xl">Sluta Leta</h1>
-        <p className="max-w-xl text-lg font-medium text-kungsbla-500">
-          Sluta leta. Låt säljarna hitta dig.
-        </p>
-        <p className="max-w-xl text-sm text-gray-500">
-          Beskriv vad du söker eller lägg in en bild. Vi matchar dig med säljare som har det du letar
-          efter — så att du slipper leta själv.
+    <div className="flex flex-col gap-8">
+      <section className="flex flex-col items-center gap-3 py-4 text-center">
+        <p className="text-xs font-bold uppercase tracking-wider text-guld-500">Sluta Leta</p>
+        <h1 className="text-3xl font-bold text-gray-900">Vad vill du köpa?</h1>
+        <p className="max-w-xs text-sm text-gray-500">
+          Beskriv vad du letar efter — säljare hittar dig och lämnar erbjudanden.
         </p>
 
-        <form onSubmit={goCreateSearch} className="mt-4 flex w-full max-w-xl flex-col gap-3 sm:flex-row">
-          <input
-            className="input"
-            placeholder="T.ex. 'Jag söker en iPhone 15 Pro, max 7000 kr, Stockholm'"
-            value={describeText}
-            onChange={(e) => setDescribeText(e.target.value)}
-          />
-          <button className="btn-primary whitespace-nowrap" type="submit">
-            Skapa sökning — gratis
-          </button>
-        </form>
-
-        <div className="mt-2 w-full max-w-xl">
-          <input
-            className="input"
-            placeholder="Sök efter vad som helst…"
-            value={internalQuery}
-            onChange={(e) => setInternalQuery(e.target.value)}
-          />
+        <div className="mt-3 flex w-full max-w-sm flex-col gap-3">
+          <Link href="/sok/ny" className="btn-primary w-full">
+            + Jag söker
+          </Link>
+          <Link
+            href="/utforska"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-guld-400 bg-guld-400/10 px-5 py-2.5 text-sm font-semibold text-guld-500 transition hover:bg-guld-400/20"
+          >
+            <CompassIcon />
+            Se sökningar
+          </Link>
         </div>
       </section>
 
@@ -86,11 +68,14 @@ export default function HomePage() {
 
         {loading ? (
           <p className="text-sm text-gray-400">Laddar…</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-sm text-gray-400">Inga aktiva sökningar just nu.</p>
+        ) : searches.length === 0 ? (
+          <div className="flex flex-col items-center gap-1 py-16 text-center">
+            <p className="text-sm font-medium text-gray-500">Inga aktiva sökningar</p>
+            <p className="text-xs text-gray-400">Bli först att publicera vad du letar efter.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((s) => (
+            {searches.map((s) => (
               <Link key={s.id} href={`/sok/${s.id}`} className="card flex flex-col gap-2 hover:shadow-md">
                 {s.image && (
                   <img src={s.image} alt="" className="h-36 w-full rounded-xl object-cover" />
