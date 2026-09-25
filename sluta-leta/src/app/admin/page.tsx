@@ -16,10 +16,26 @@ type Overview = {
   transactionsByState: { state: string; _count: number }[];
 };
 
+type Report = {
+  id: string;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  createdAt: string;
+  reporter: { name: string; email: string };
+};
+
 export default function AdminPage() {
   const { user, loading } = useCurrentUser();
   const [overview, setOverview] = useState<Overview | null>(null);
+  const [reports, setReports] = useState<Report[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  function loadReports() {
+    fetch("/api/admin/reports")
+      .then((r) => r.json())
+      .then((d) => setReports(d.reports ?? []));
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -30,7 +46,17 @@ export default function AdminPage() {
         setOverview(data);
       })
       .catch((e) => setError(e.message));
+    loadReports();
   }, [user]);
+
+  async function resolveReport(id: string, status: "ACTIONED" | "DISMISSED") {
+    await fetch("/api/admin/reports", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    loadReports();
+  }
 
   if (loading) return <p className="text-sm text-gray-400">Laddar…</p>;
   if (!user?.isAdmin) return <p className="text-sm text-red-600">Kräver adminbehörighet.</p>;
@@ -71,6 +97,38 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-lg font-bold text-kungsbla-700">Öppna rapporter ({reports.length})</h2>
+        {reports.length === 0 ? (
+          <p className="text-sm text-gray-400">Inga öppna rapporter.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {reports.map((r) => (
+              <div key={r.id} className="card flex flex-col gap-1">
+                <p className="text-xs text-gray-400">
+                  {r.targetType} {r.targetId} · rapporterad av {r.reporter.name} ({r.reporter.email})
+                </p>
+                <p className="text-sm text-gray-700">{r.reason}</p>
+                <div className="mt-1 flex gap-2">
+                  <button
+                    className="text-xs font-semibold text-kungsbla-600 underline"
+                    onClick={() => resolveReport(r.id, "ACTIONED")}
+                  >
+                    Åtgärdad
+                  </button>
+                  <button
+                    className="text-xs text-gray-400 underline"
+                    onClick={() => resolveReport(r.id, "DISMISSED")}
+                  >
+                    Avfärda
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

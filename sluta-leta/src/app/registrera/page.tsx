@@ -49,6 +49,17 @@ export default function RegisterPage() {
           <button className="btn-primary" type="submit" disabled={loading}>
             {loading ? "Skapar konto…" : "Skapa konto"}
           </button>
+          <p className="text-xs text-gray-400">
+            Genom att skapa ett konto godkänner du våra{" "}
+            <Link href="/villkor" className="underline">
+              användarvillkor
+            </Link>{" "}
+            och vår{" "}
+            <Link href="/integritet" className="underline">
+              integritetspolicy
+            </Link>
+            .
+          </p>
         </form>
       )}
       <p className="text-sm text-gray-500">

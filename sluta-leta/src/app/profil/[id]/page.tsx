@@ -87,6 +87,9 @@ export default function ProfilePage() {
   const [offerCount, setOfferCount] = useState(0);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [openSection, setOpenSection] = useState<"sokningar" | "integritet" | "hjalp" | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   useEffect(() => {
     fetch(`/api/users/${id}`)
@@ -110,6 +113,17 @@ export default function ProfilePage() {
     await fetch("/api/auth/me", { method: "DELETE" });
     await refresh();
     router.push("/");
+  }
+
+  async function sendReport() {
+    if (!profile || reportReason.trim().length < 5) return;
+    setReportState("sending");
+    const res = await fetch("/api/reports", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetType: "USER", targetId: profile.id, reason: reportReason.trim() }),
+    });
+    setReportState(res.ok ? "sent" : "error");
   }
 
   if (!profile) return <p className="text-sm text-gray-400">Laddar…</p>;
@@ -147,6 +161,44 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {!isSelf && user && (
+        <div className="flex flex-col gap-2">
+          {!reporting ? (
+            <button
+              className="w-fit text-xs font-medium text-gray-400 underline"
+              onClick={() => setReporting(true)}
+            >
+              Rapportera användare
+            </button>
+          ) : reportState === "sent" ? (
+            <p className="text-xs text-gray-500">Tack, vi har tagit emot din rapport.</p>
+          ) : (
+            <div className="card flex flex-col gap-2">
+              <label className="text-xs font-medium text-gray-700">Varför rapporterar du {profile.name}?</label>
+              <textarea
+                className="input min-h-20 text-sm"
+                placeholder="Beskriv vad som hänt…"
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+              />
+              {reportState === "error" && <p className="text-xs text-red-600">Något gick fel, försök igen.</p>}
+              <div className="flex gap-2">
+                <button
+                  className="btn-primary !px-4 !py-1.5 text-xs"
+                  disabled={reportReason.trim().length < 5 || reportState === "sending"}
+                  onClick={sendReport}
+                >
+                  {reportState === "sending" ? "Skickar…" : "Skicka rapport"}
+                </button>
+                <button className="text-xs text-gray-400 underline" onClick={() => setReporting(false)}>
+                  Avbryt
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {isSelf && !user?.isPlus && (
         <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-br from-guld-400 to-guld-500 p-5 text-white shadow-sm">

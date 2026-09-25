@@ -53,6 +53,12 @@ export const createReviewSchema = z.object({
   comment: z.string().trim().max(1000).optional(),
 });
 
+export const createReportSchema = z.object({
+  targetType: z.enum(["USER", "SEARCH", "LISTING"]),
+  targetId: z.string().cuid(),
+  reason: z.string().trim().min(5).max(500),
+});
+
 export const sendMessageSchema = z.object({
   transactionId: z.string().cuid(),
   type: z.enum(["TEXT", "IMAGE", "VOICE"]).default("TEXT"),
