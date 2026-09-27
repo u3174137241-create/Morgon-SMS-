@@ -131,7 +131,7 @@ export default function ExplorePage() {
                 {s.budgetMax && <span className="font-semibold text-kungsbla-600">max {s.budgetMax} kr</span>}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-guld-500">{s.offerCount} erbjudanden</span>
+                <span className="text-xs text-guld-600">{s.offerCount} erbjudanden</span>
                 <span className="text-xs font-semibold text-kungsbla-600">Lämna erbjudande →</span>
               </div>
             </Link>

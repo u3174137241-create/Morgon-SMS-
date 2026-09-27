@@ -124,7 +124,7 @@ function SearchDetailContent() {
   return (
     <div className="flex flex-col gap-8">
       {notifiedSellers > 0 && (
-        <p className="rounded-xl bg-guld-400/10 p-3 text-sm text-guld-500">
+        <p className="rounded-xl bg-guld-400/10 p-3 text-sm text-guld-600">
           Klart! {notifiedSellers} säljare som redan har något liknande har notifierats direkt.
         </p>
       )}

@@ -213,14 +213,25 @@ export default function TransactionThreadPage() {
       {transaction.state === "COMPLETED" && !reviewSent && (
         <form onSubmit={sendReview} className="card flex flex-col gap-2">
           <p className="text-sm font-semibold text-kungsbla-700">Betygsätt affären</p>
-          <select className="input" value={reviewRating} onChange={(e) => setReviewRating(Number(e.target.value))}>
+          <select
+            className="input"
+            aria-label="Betyg, 1 till 5 stjärnor"
+            value={reviewRating}
+            onChange={(e) => setReviewRating(Number(e.target.value))}
+          >
             {[5, 4, 3, 2, 1].map((n) => (
               <option key={n} value={n}>
                 {n} ★
               </option>
             ))}
           </select>
-          <textarea className="input" placeholder="Kommentar (valfritt)" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+          <textarea
+            className="input"
+            placeholder="Kommentar (valfritt)"
+            aria-label="Kommentar, valfritt"
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+          />
           <button className="btn-primary w-fit" type="submit">
             Skicka recension
           </button>

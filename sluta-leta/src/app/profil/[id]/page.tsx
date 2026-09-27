@@ -206,13 +206,13 @@ export default function ProfilePage() {
             <span aria-hidden>★</span> Sluta Leta Plus
           </div>
           <p className="text-sm text-white/90">99 kr/mån — inga kontaktavgifter, alla säljarfunktioner</p>
-          <Link href="/plus" className="w-fit rounded-full bg-white px-5 py-2 text-sm font-semibold text-guld-500">
+          <Link href="/plus" className="w-fit rounded-full bg-white px-5 py-2 text-sm font-semibold text-guld-600">
             Aktivera Plus
           </Link>
         </div>
       )}
       {isSelf && user?.isPlus && (
-        <div className="flex items-center justify-between rounded-2xl bg-guld-400/15 p-4 text-sm font-semibold text-guld-500">
+        <div className="flex items-center justify-between rounded-2xl bg-guld-400/15 p-4 text-sm font-semibold text-guld-600">
           <span>★ Du har Sluta Leta Plus</span>
           <Link href="/plus" className="text-xs font-medium underline">
             Hantera
@@ -366,7 +366,7 @@ export default function ProfilePage() {
         </button>
       )}
 
-      <p className="pb-2 text-center text-xs text-gray-300">Sluta Leta · beskriv vad du söker, säljare hör av sig</p>
+      <p className="pb-2 text-center text-xs text-gray-500">Sluta Leta · beskriv vad du söker, säljare hör av sig</p>
     </div>
   );
 }

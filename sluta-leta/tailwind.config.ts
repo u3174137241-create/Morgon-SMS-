@@ -16,6 +16,16 @@ const config: Config = {
         guld: {
           400: "#d4af37",
           500: "#c19a2e",
+          // 600 är en mörkare variant av samma guldton, till för text — 500 klarar
+          // bara ~2.6:1 kontrast mot vitt (WCAG AA kräver 4.5:1 för brödtext).
+          600: "#896b1f",
+        },
+        // Hela appens ljusgrå brödtext (rubrikundertexter, tidsstämplar, hjälptext)
+        // använder gray-400, som bara klarar ~2.5:1 kontrast mot vitt — under
+        // WCAG AA:s krav på 4.5:1. Detta byter bara den nyansen mot Tailwinds
+        // egen gray-500 (4.83:1), oförändrat i övrigt.
+        gray: {
+          400: "#6b7280",
         },
       },
       fontFamily: {

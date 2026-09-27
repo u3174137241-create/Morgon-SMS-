@@ -59,7 +59,12 @@ function CreateSearchForm() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Skick</label>
-          <select className="input" value={condition} onChange={(e) => setCondition(e.target.value as (typeof CONDITIONS)[number])}>
+          <select
+            className="input"
+            aria-label="Skick"
+            value={condition}
+            onChange={(e) => setCondition(e.target.value as (typeof CONDITIONS)[number])}
+          >
             {CONDITIONS.map((c) => (
               <option key={c} value={c}>
                 {c}

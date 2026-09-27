@@ -117,7 +117,7 @@ export default function NavBar() {
               key={link.href}
               href={link.href}
               className={`flex min-w-14 flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium ${
-                active ? "text-kungsbla-600" : "text-gray-400"
+                active ? "text-kungsbla-600" : "text-gray-500"
               }`}
             >
               <Icon active={active} />
@@ -128,7 +128,7 @@ export default function NavBar() {
         <Link
           href={profileHref}
           className={`flex min-w-14 flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium ${
-            profileActive ? "text-kungsbla-600" : "text-gray-400"
+            profileActive ? "text-kungsbla-600" : "text-gray-500"
           }`}
         >
           <ProfileIcon active={profileActive} />

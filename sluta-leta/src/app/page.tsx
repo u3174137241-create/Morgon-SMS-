@@ -49,7 +49,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col items-center gap-3 py-4 text-center">
-        <p className="text-xs font-bold uppercase tracking-wider text-guld-500">Sluta Leta</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-guld-600">Sluta Leta</p>
         <h1 className="text-3xl font-bold text-gray-900">Sluta leta. Låt säljare hitta dig.</h1>
         <p className="max-w-xs text-sm text-gray-500">
           Skriv vad du vill köpa och till vilket pris. Säljare som har det hör av sig direkt till
@@ -62,7 +62,7 @@ export default function HomePage() {
           </Link>
           <Link
             href="/utforska"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-guld-400 bg-guld-400/10 px-5 py-2.5 text-sm font-semibold text-guld-500 transition hover:bg-guld-400/20"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-guld-400 bg-guld-400/10 px-5 py-2.5 text-sm font-semibold text-guld-600 transition hover:bg-guld-400/20"
           >
             <CompassIcon />
             Se sökningar
@@ -94,12 +94,12 @@ export default function HomePage() {
         <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-center sm:gap-4 sm:text-left">
           <div className="rounded-xl bg-kungsbla-50 px-4 py-3">
             <p className="text-sm font-semibold text-kungsbla-700">🚲 Elcykel</p>
-            <p className="text-xs text-gray-500">Stockholm · Max 8 000 kr</p>
+            <p className="text-xs text-gray-600">Stockholm · Max 8 000 kr</p>
           </div>
           <span className="text-lg text-gray-300">↓</span>
           <div className="rounded-xl bg-guld-400/10 px-4 py-3">
             <p className="text-sm text-gray-700">”Jag har en Crescent elcykel som passar.”</p>
-            <p className="text-sm font-bold text-guld-500">7 500 kr</p>
+            <p className="text-sm font-bold text-guld-600">7 500 kr</p>
           </div>
           <span className="text-lg text-gray-300 sm:hidden">↓</span>
         </div>
@@ -109,7 +109,7 @@ export default function HomePage() {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-kungsbla-700">Sökes just nu</h2>
-          <Link href="/hitta-kopare" className="text-sm font-semibold text-guld-500 hover:underline">
+          <Link href="/hitta-kopare" className="text-sm font-semibold text-guld-600 hover:underline">
             Säljare? Hitta köpare →
           </Link>
         </div>
@@ -146,7 +146,7 @@ export default function HomePage() {
                   {s.budgetMax && <span className="font-semibold text-kungsbla-600">max {s.budgetMax} kr</span>}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-guld-500">{s.offerCount} erbjudanden</span>
+                  <span className="text-xs text-guld-600">{s.offerCount} erbjudanden</span>
                   <span className="text-xs font-semibold text-kungsbla-600">Lämna erbjudande →</span>
                 </div>
               </Link>

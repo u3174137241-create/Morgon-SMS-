@@ -27,5 +27,5 @@ body {
 }
 
 .badge-guld {
-  @apply inline-flex items-center gap-1 rounded-full bg-guld-400/15 px-2 py-0.5 text-xs font-medium text-guld-500;
+  @apply inline-flex items-center gap-1 rounded-full bg-guld-400/15 px-2 py-0.5 text-xs font-medium text-guld-600;
 }
