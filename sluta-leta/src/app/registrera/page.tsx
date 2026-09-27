@@ -29,16 +29,37 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-4">
-      <h1 className="text-2xl font-bold text-kungsbla-700">Skapa konto</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-kungsbla-700">Skapa konto</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gratis konto — publicera vad du söker eller lämna erbjudanden på andras sökningar.
+        </p>
+      </div>
       {message ? (
         <p className="rounded-xl bg-kungsbla-50 p-4 text-sm text-kungsbla-600">{message}</p>
       ) : (
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          <input className="input" placeholder="Namn" value={name} onChange={(e) => setName(e.target.value)} required />
-          <input className="input" placeholder="E-post" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            className="input"
+            placeholder="Namn"
+            aria-label="Namn"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <input
+            className="input"
+            placeholder="E-post"
+            aria-label="E-post"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
           <input
             className="input"
             placeholder="Lösenord (minst 8 tecken)"
+            aria-label="Lösenord, minst 8 tecken"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

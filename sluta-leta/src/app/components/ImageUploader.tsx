@@ -43,6 +43,7 @@ export default function ImageUploader({
             <button
               type="button"
               onClick={() => onChange(images.filter((u) => u !== url))}
+              aria-label="Ta bort bild"
               className="absolute right-0 top-0 rounded-bl bg-black/60 px-1 text-xs text-white"
             >
               ×

@@ -26,11 +26,24 @@ function ResetContent() {
     router.push("/logga-in");
   }
 
+  if (!token) {
+    return (
+      <p className="text-sm text-red-600">
+        Länken är ogiltig eller har gått ut. Begär en ny återställningslänk på{" "}
+        <a href="/glomt-losenord" className="underline">
+          Glömt lösenord
+        </a>
+        .
+      </p>
+    );
+  }
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
       <input
         className="input"
         placeholder="Nytt lösenord (minst 8 tecken)"
+        aria-label="Nytt lösenord, minst 8 tecken"
         type="password"
         minLength={8}
         value={password}

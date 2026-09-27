@@ -22,12 +22,23 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-4">
-      <h1 className="text-2xl font-bold text-kungsbla-700">Glömt lösenord</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-kungsbla-700">Glömt lösenord</h1>
+        <p className="mt-1 text-sm text-gray-500">Ange din e-postadress så skickar vi en länk för att välja ett nytt lösenord.</p>
+      </div>
       {message ? (
         <p className="rounded-xl bg-kungsbla-50 p-4 text-sm text-kungsbla-600">{message}</p>
       ) : (
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          <input className="input" placeholder="E-post" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            className="input"
+            placeholder="E-post"
+            aria-label="E-post"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
           <button className="btn-primary" type="submit" disabled={loading}>
             {loading ? "Skickar…" : "Skicka återställningslänk"}
           </button>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import { TRANSACTION_STATE_LABELS } from "@/lib/transactionLabels";
 
 type TransactionListItem = {
   id: string;
@@ -14,30 +15,27 @@ type TransactionListItem = {
   offer: { message: string; price: number };
 };
 
-const STATE_LABELS: Record<string, string> = {
-  OFFER_ACCEPTED: "Godkänt",
-  CONTACT_FEE_PENDING: "Väntar på betalning",
-  PAYMENT_PROCESSING: "Behandlar betalning",
-  PAYMENT_COMPLETED: "Betalning klar",
-  CHAT_UNLOCKED: "Chatt upplåst",
-  DEAL_IN_PROGRESS: "Affär pågår",
-  WAITING_FOR_COMPLETION: "Väntar på bekräftelse",
-  COMPLETED: "Genomförd",
-  CANCELLED: "Avbruten",
-  FAILED: "Misslyckades",
-  DISPUTED: "Tvist",
-};
-
 export default function MessagesListPage() {
   const { user } = useCurrentUser();
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  function load() {
+    setLoading(true);
+    setError(false);
+    fetch("/api/transactions")
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((d) => setTransactions(d.transactions ?? []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }
 
   useEffect(() => {
-    fetch("/api/transactions")
-      .then((r) => r.json())
-      .then((d) => setTransactions(d.transactions ?? []))
-      .finally(() => setLoading(false));
+    load();
   }, []);
 
   if (user === null) {
@@ -49,6 +47,14 @@ export default function MessagesListPage() {
       <h1 className="text-2xl font-bold text-kungsbla-700">Meddelanden</h1>
       {loading ? (
         <p className="text-sm text-gray-400">Laddar…</p>
+      ) : error ? (
+        <div className="flex flex-col items-center gap-2 py-16 text-center">
+          <p className="text-sm font-medium text-gray-500">Något gick fel.</p>
+          <p className="text-xs text-gray-400">Vi kunde inte hämta dina meddelanden just nu.</p>
+          <button className="btn-secondary mt-2 !px-5 !py-2 text-xs" onClick={load}>
+            Försök igen
+          </button>
+        </div>
       ) : transactions.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-16 text-center">
           <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="h-10 w-10 text-gray-300">
@@ -56,11 +62,12 @@ export default function MessagesListPage() {
           </svg>
           <p className="text-sm font-medium text-gray-500">Inga meddelanden ännu</p>
           <p className="max-w-xs text-xs text-gray-400">
-            Konversationer startas när du accepterar ett erbjudande
+            Här hamnar konversationen så fort du accepterar ett erbjudande, eller ett erbjudande du
+            lämnat blir accepterat.
           </p>
           {user && (
             <Link href={`/profil/${user.id}`} className="btn-primary mt-2 !px-5 !py-2 text-xs">
-              Mina önskemål
+              Mina sökningar
             </Link>
           )}
         </div>
@@ -76,7 +83,7 @@ export default function MessagesListPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-kungsbla-600">{t.amount} kr</p>
-                  <p className="text-xs text-gray-400">{STATE_LABELS[t.state] ?? t.state}</p>
+                  <p className="text-xs text-gray-400">{TRANSACTION_STATE_LABELS[t.state] ?? t.state}</p>
                 </div>
               </Link>
             );

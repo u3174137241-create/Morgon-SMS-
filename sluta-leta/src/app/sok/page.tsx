@@ -16,15 +16,23 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchListItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  function load() {
+    setLoading(true);
+    setError(false);
+    fetch("/api/searches")
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((d) => setItems(d.searches ?? []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }
 
   useEffect(() => {
-    setLoading(true);
-    const timeout = setTimeout(() => {
-      fetch("/api/searches")
-        .then((r) => r.json())
-        .then((d) => setItems(d.searches ?? []))
-        .finally(() => setLoading(false));
-    }, 200);
+    const timeout = setTimeout(load, 200);
     return () => clearTimeout(timeout);
   }, []);
 
@@ -35,28 +43,39 @@ export default function SearchPage() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
-      <h1 className="text-2xl font-bold text-kungsbla-700">Sök</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-kungsbla-700">Sök bland önskemål</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Har du något att sälja? Sök på nyckelord för att snabbt hitta personer som redan letar
+          efter just det.
+        </p>
+      </div>
       <input
         className="input"
-        placeholder="Sök bland sökningar…"
+        placeholder="T.ex. cykel, iPhone, Stockholm…"
+        aria-label="Sök bland önskemål"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      <p className="text-xs text-gray-400">
-        Sökning letar bara bland befintliga efterlysningar. Vill du skapa en egen? Gå till{" "}
-        <Link href="/" className="font-medium text-kungsbla-600 hover:underline">
-          Hem
-        </Link>
-        .
-      </p>
+      <Link href="/sok/ny" className="btn-primary w-fit !px-5 !py-2 text-xs">
+        + Söker du själv något? Skapa en sökning
+      </Link>
 
       {loading ? (
         <p className="text-sm text-gray-400">Laddar…</p>
+      ) : error ? (
+        <div className="flex flex-col items-center gap-1 py-12 text-center">
+          <p className="text-sm font-medium text-gray-500">Något gick fel.</p>
+          <p className="text-xs text-gray-400">Vi kunde inte hämta sökningarna just nu.</p>
+          <button className="btn-secondary mt-2 !px-5 !py-2 text-xs" onClick={load}>
+            Försök igen
+          </button>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-1 py-12 text-center">
-          <p className="text-sm font-medium text-gray-500">Inga sökningar</p>
+          <p className="text-sm font-medium text-gray-500">Inga träffar</p>
           <p className="text-xs text-gray-400">
-            {q ? "Inget matchade din sökning." : "Bli först att publicera vad du letar efter."}
+            {q ? "Inget matchade din sökning just nu." : "Ingen söker efter något just nu."}
           </p>
         </div>
       ) : (

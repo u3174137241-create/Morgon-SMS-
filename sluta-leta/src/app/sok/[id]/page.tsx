@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import ImageUploader from "@/app/components/ImageUploader";
+import { SEARCH_STATUS_LABELS } from "@/lib/transactionLabels";
 
 type Offer = {
   id: string;
@@ -50,10 +51,15 @@ function SearchDetailContent() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/searches/${id}`);
-    const data = await res.json();
-    if (!res.ok) return setError(data.error);
-    setSearch(data.search);
+    setError(null);
+    try {
+      const res = await fetch(`/api/searches/${id}`);
+      const data = await res.json();
+      if (!res.ok) return setError(data.error ?? "Något gick fel.");
+      setSearch(data.search);
+    } catch {
+      setError("Vi kunde inte hämta sökningen just nu.");
+    }
   }, [id]);
 
   useEffect(() => {
@@ -100,7 +106,17 @@ function SearchDetailContent() {
     if (res.ok) load();
   }
 
-  if (error) return <p className="text-sm text-red-600">{error}</p>;
+  if (error) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-16 text-center">
+        <p className="text-sm font-medium text-gray-500">Något gick fel.</p>
+        <p className="text-xs text-gray-400">{error}</p>
+        <button className="btn-secondary mt-2 !px-5 !py-2 text-xs" onClick={load}>
+          Försök igen
+        </button>
+      </div>
+    );
+  }
   if (!search) return <p className="text-sm text-gray-400">Laddar…</p>;
 
   const isOwner = user && user.id === search.user.id;
@@ -128,7 +144,9 @@ function SearchDetailContent() {
         {search.budgetMax && <p className="text-sm font-semibold text-kungsbla-600">Budget: max {search.budgetMax} kr</p>}
         {isOwner && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
-            <span className="text-xs font-medium text-gray-400">Status: {search.status}</span>
+            <span className="text-xs font-medium text-gray-400">
+              Status: {SEARCH_STATUS_LABELS[search.status] ?? search.status}
+            </span>
             <div className="ml-auto flex flex-wrap gap-2">
               {search.status === "ACTIVE" && (
                 <button className="btn-secondary !px-3 !py-1 text-xs" onClick={() => updateSearch({ status: "PAUSED" })}>
@@ -157,6 +175,18 @@ function SearchDetailContent() {
           </div>
         )}
       </div>
+
+      {isOwner && search.status === "ACTIVE" && search.offers.length === 0 && (
+        <div className="card flex flex-col gap-2">
+          <h2 className="text-sm font-bold text-kungsbla-700">Vad händer nu?</h2>
+          <ol className="flex flex-col gap-1.5 text-sm text-gray-600">
+            <li>1. Din sökning visas nu för säljare som kan ha det du letar efter.</li>
+            <li>2. Säljare som har något som matchar lämnar erbjudanden här på sidan.</li>
+            <li>3. Du får en notis så fort ett erbjudande kommer in.</li>
+            <li>4. Du jämför erbjudandena och väljer själv om du vill gå vidare.</li>
+          </ol>
+        </div>
+      )}
 
       <div>
         <h2 className="mb-3 text-lg font-bold text-kungsbla-700">Erbjudanden ({search.offers.length})</h2>
@@ -217,6 +247,7 @@ function SearchDetailContent() {
               className="input"
               type="number"
               placeholder="Pris (kr)"
+              aria-label="Ditt pris i kronor"
               value={offerPrice}
               onChange={(e) => setOfferPrice(e.target.value)}
               required
@@ -224,6 +255,7 @@ function SearchDetailContent() {
             <textarea
               className="input"
               placeholder="Kort beskrivning"
+              aria-label="Kort beskrivning av vad du erbjuder"
               value={offerMessage}
               onChange={(e) => setOfferMessage(e.target.value)}
               required

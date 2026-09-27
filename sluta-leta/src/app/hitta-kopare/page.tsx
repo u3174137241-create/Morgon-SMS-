@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import ImageUploader from "@/app/components/ImageUploader";
 
 type Match = {
   search: { id: string; title: string; description: string; budgetMax: number | null; location: string; user: { name: string } };
   score: number;
 };
+
+function matchLabel(score: number) {
+  if (score >= 0.8) return "Stark matchning";
+  if (score >= 0.5) return "Bra matchning";
+  return "Möjlig matchning";
+}
 
 export default function FindBuyersPage() {
   const [title, setTitle] = useState("");
@@ -55,16 +62,39 @@ export default function FindBuyersPage() {
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <input className="input" placeholder="Vad säljer du?" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input
+          className="input"
+          placeholder="Vad säljer du?"
+          aria-label="Vad säljer du?"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
         <textarea
           className="input"
           placeholder="Beskrivning"
+          aria-label="Beskrivning"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
         />
-        <input className="input" type="number" placeholder="Pris (kr)" value={price} onChange={(e) => setPrice(e.target.value)} required />
-        <input className="input" placeholder="Plats (t.ex. Stockholm)" value={location} onChange={(e) => setLocation(e.target.value)} required />
+        <input
+          className="input"
+          type="number"
+          placeholder="Pris (kr)"
+          aria-label="Pris i kronor"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          required
+        />
+        <input
+          className="input"
+          placeholder="Plats (t.ex. Stockholm)"
+          aria-label="Plats"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          required
+        />
         <ImageUploader images={images} onChange={setImages} />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button className="btn-primary w-fit" type="submit" disabled={loading}>
@@ -74,8 +104,19 @@ export default function FindBuyersPage() {
 
       {matches && (
         <div>
-          <h2 className="mb-3 text-lg font-bold text-kungsbla-700">Matchande köpare ({matches.length})</h2>
-          {matches.length === 0 && <p className="text-sm text-gray-400">Inga matchande köpare hittades just nu.</p>}
+          <h2 className="text-lg font-bold text-kungsbla-700">Matchande köpare ({matches.length})</h2>
+          {matches.length > 0 && (
+            <p className="mb-3 text-xs text-gray-400">Personer vars beskrivning liknar det du säljer.</p>
+          )}
+          {matches.length === 0 && (
+            <p className="mt-1 text-sm text-gray-400">
+              Ingen söker efter något liknande just nu. Testa gärna igen senare, eller kika på{" "}
+              <Link href="/utforska" className="font-medium text-kungsbla-600 hover:underline">
+                Sökes just nu
+              </Link>
+              .
+            </p>
+          )}
           <div className="flex flex-col gap-3">
             {matches.map(({ search, score }) => (
               <div key={search.id} className="card flex items-center justify-between gap-3">
@@ -83,7 +124,7 @@ export default function FindBuyersPage() {
                   <p className="text-sm font-semibold text-kungsbla-700">{search.user.name} söker</p>
                   <p className="text-sm text-gray-600">{search.description}</p>
                   <p className="text-xs text-gray-400">
-                    {search.location} · matchpoäng {(score * 100).toFixed(0)}%
+                    {search.location} · {matchLabel(score)}
                   </p>
                 </div>
                 <button

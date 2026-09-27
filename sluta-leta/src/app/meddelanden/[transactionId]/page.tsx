@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import { TRANSACTION_STATE_LABELS } from "@/lib/transactionLabels";
 
 type Transaction = {
   id: string;
@@ -16,6 +17,7 @@ type Transaction = {
   conversation: { id: string } | null;
   buyer: { id: string; name: string };
   seller: { id: string; name: string };
+  offer: { message: string; price: number; search: { title: string } | null };
 };
 
 type Message = {
@@ -31,6 +33,7 @@ export default function TransactionThreadPage() {
   const { transactionId } = useParams<{ transactionId: string }>();
   const { user } = useCurrentUser();
   const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +43,15 @@ export default function TransactionThreadPage() {
   const [reviewSent, setReviewSent] = useState(false);
 
   const loadTransaction = useCallback(async () => {
-    const res = await fetch(`/api/transactions/${transactionId}`);
-    const data = await res.json();
-    if (res.ok) setTransaction(data.transaction);
+    setLoadError(false);
+    try {
+      const res = await fetch(`/api/transactions/${transactionId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error();
+      setTransaction(data.transaction);
+    } catch {
+      setLoadError(true);
+    }
   }, [transactionId]);
 
   const loadMessages = useCallback(async () => {
@@ -109,6 +118,17 @@ export default function TransactionThreadPage() {
     setReviewSent(true);
   }
 
+  if (loadError) {
+    return (
+      <div className="mx-auto flex max-w-lg flex-col items-center gap-2 py-16 text-center">
+        <p className="text-sm font-medium text-gray-500">Något gick fel.</p>
+        <p className="text-xs text-gray-400">Vi kunde inte hämta den här konversationen just nu.</p>
+        <button className="btn-secondary mt-2 !px-5 !py-2 text-xs" onClick={loadTransaction}>
+          Försök igen
+        </button>
+      </div>
+    );
+  }
   if (!transaction || !user) return <p className="text-sm text-gray-400">Laddar…</p>;
 
   const isSeller = user.id === transaction.sellerId;
@@ -117,14 +137,19 @@ export default function TransactionThreadPage() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
-      <div className="card flex items-center justify-between">
-        <div>
+      <div className="card flex flex-col gap-1">
+        <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-kungsbla-700">
             {isBuyer ? transaction.seller.name : transaction.buyer.name}
           </p>
-          <p className="text-xs text-gray-400">{transaction.amount} kr</p>
+          <span className="text-xs font-medium text-kungsbla-500">
+            {TRANSACTION_STATE_LABELS[transaction.state] ?? transaction.state}
+          </span>
         </div>
-        <span className="text-xs font-medium text-kungsbla-500">{transaction.state}</span>
+        {transaction.offer.search && (
+          <p className="line-clamp-1 text-xs text-gray-400">Gäller: {transaction.offer.search.title}</p>
+        )}
+        <p className="text-sm font-bold text-kungsbla-600">{transaction.amount} kr</p>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -165,7 +190,13 @@ export default function TransactionThreadPage() {
             {messages.length === 0 && <p className="text-sm text-gray-400">Säg hej!</p>}
           </div>
           <form onSubmit={sendMessage} className="mt-2 flex gap-2">
-            <input className="input" placeholder="Skriv ett meddelande…" value={text} onChange={(e) => setText(e.target.value)} />
+            <input
+              className="input"
+              placeholder="Skriv ett meddelande…"
+              aria-label="Skriv ett meddelande"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
             <button className="btn-primary" type="submit">
               Skicka
             </button>

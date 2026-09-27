@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 type SearchListItem = {
@@ -12,6 +12,7 @@ type SearchListItem = {
   location: string;
   image: string | null;
   offerCount: number;
+  createdAt: string;
   user: { name: string; verified: boolean };
 };
 
@@ -20,27 +21,42 @@ const TABS = [
   { key: "PRODUCT", label: "Produkter" },
 ] as const;
 
+function daysAgoLabel(createdAt: string) {
+  const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
+  if (days <= 0) return "Idag";
+  if (days === 1) return "1 dag sedan";
+  return `${days} dagar sedan`;
+}
+
 export default function ExplorePage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("ALL");
   const [budgetMax, setBudgetMax] = useState("");
   const [location, setLocation] = useState("");
   const [items, setItems] = useState<SearchListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchItems = useCallback(() => {
     setLoading(true);
+    setError(false);
     const params = new URLSearchParams();
     if (tab !== "ALL") params.set("type", tab);
     if (budgetMax) params.set("budgetMax", budgetMax);
     if (location.trim()) params.set("location", location.trim());
-    const timeout = setTimeout(() => {
-      fetch(`/api/searches?${params.toString()}`)
-        .then((r) => r.json())
-        .then((d) => setItems(d.searches ?? []))
-        .finally(() => setLoading(false));
-    }, 250);
-    return () => clearTimeout(timeout);
+    return fetch(`/api/searches?${params.toString()}`)
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((d) => setItems(d.searches ?? []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, [tab, budgetMax, location]);
+
+  useEffect(() => {
+    const timeout = setTimeout(fetchItems, 250);
+    return () => clearTimeout(timeout);
+  }, [fetchItems]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,12 +84,14 @@ export default function ExplorePage() {
           className="input sm:max-w-40"
           type="number"
           placeholder="Max budget (kr)"
+          aria-label="Filtrera på max budget"
           value={budgetMax}
           onChange={(e) => setBudgetMax(e.target.value)}
         />
         <input
           className="input sm:max-w-56"
           placeholder="Plats (t.ex. Stockholm)"
+          aria-label="Filtrera på plats"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
@@ -81,10 +99,18 @@ export default function ExplorePage() {
 
       {loading ? (
         <p className="text-sm text-gray-400">Laddar…</p>
+      ) : error ? (
+        <div className="flex flex-col items-center gap-1 py-16 text-center">
+          <p className="text-sm font-medium text-gray-500">Något gick fel.</p>
+          <p className="text-xs text-gray-400">Vi kunde inte hämta sökningarna just nu.</p>
+          <button className="btn-secondary mt-3 !px-5 !py-2 text-xs" onClick={fetchItems}>
+            Försök igen
+          </button>
+        </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center gap-1 py-16 text-center">
-          <p className="text-sm font-medium text-gray-500">Inga sökningar</p>
-          <p className="text-xs text-gray-400">Bli först att publicera vad du letar efter.</p>
+          <p className="text-sm font-medium text-gray-500">Ingen söker efter detta just nu</p>
+          <p className="text-xs text-gray-400">Nya sökningar visas här när personer börjar leta.</p>
           <Link href="/" className="btn-primary mt-3 !px-5 !py-2 text-xs">
             Skapa sökning
           </Link>
@@ -97,11 +123,16 @@ export default function ExplorePage() {
               <div className="flex items-center gap-2 text-sm font-semibold text-kungsbla-700">
                 {s.user.name}
                 {s.user.verified && <span className="badge-guld">✓</span>}
+                <span className="ml-auto text-[11px] font-normal text-gray-400">{daysAgoLabel(s.createdAt)}</span>
               </div>
               <p className="line-clamp-2 text-sm text-gray-600">{s.description}</p>
               <div className="mt-auto flex items-center justify-between text-xs text-gray-500">
                 <span>{s.location}</span>
                 {s.budgetMax && <span className="font-semibold text-kungsbla-600">max {s.budgetMax} kr</span>}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-guld-500">{s.offerCount} erbjudanden</span>
+                <span className="text-xs font-semibold text-kungsbla-600">Lämna erbjudande →</span>
               </div>
             </Link>
           ))}

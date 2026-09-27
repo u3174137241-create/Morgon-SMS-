@@ -53,7 +53,7 @@ export default function PlusPage() {
       <div className="card flex flex-col gap-2 text-left text-sm text-gray-700">
         <p>✓ 0 kr kontaktavgift på alla affärer</p>
         <p>✓ Full tillgång till Hitta köpare</p>
-        <p>✓ Obegränsat antal legitima kontaktupplåsningar</p>
+        <p>✓ Inget tak på hur många affärer du gör</p>
       </div>
 
       {loading ? (

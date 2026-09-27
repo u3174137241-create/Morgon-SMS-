@@ -27,12 +27,23 @@ function CompassIcon() {
 export default function HomePage() {
   const [searches, setSearches] = useState<SearchListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  function load() {
+    setLoading(true);
+    setError(false);
+    fetch("/api/searches")
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((d) => setSearches(d.searches ?? []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }
 
   useEffect(() => {
-    fetch("/api/searches")
-      .then((r) => r.json())
-      .then((d) => setSearches(d.searches ?? []))
-      .finally(() => setLoading(false));
+    load();
   }, []);
 
   return (
@@ -57,6 +68,9 @@ export default function HomePage() {
             Se sökningar
           </Link>
         </div>
+        <p className="mt-1 text-xs text-gray-400">
+          ✓ Gratis att söka · ✓ Ingen köptvång · ✓ Du väljer själv
+        </p>
       </section>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -75,6 +89,23 @@ export default function HomePage() {
         ))}
       </section>
 
+      <section className="card flex flex-col gap-3">
+        <h2 className="text-sm font-bold text-kungsbla-700">Så fungerar det</h2>
+        <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-center sm:gap-4 sm:text-left">
+          <div className="rounded-xl bg-kungsbla-50 px-4 py-3">
+            <p className="text-sm font-semibold text-kungsbla-700">🚲 Elcykel</p>
+            <p className="text-xs text-gray-500">Stockholm · Max 8 000 kr</p>
+          </div>
+          <span className="text-lg text-gray-300">↓</span>
+          <div className="rounded-xl bg-guld-400/10 px-4 py-3">
+            <p className="text-sm text-gray-700">”Jag har en Crescent elcykel som passar.”</p>
+            <p className="text-sm font-bold text-guld-500">7 500 kr</p>
+          </div>
+          <span className="text-lg text-gray-300 sm:hidden">↓</span>
+        </div>
+        <p className="text-center text-xs text-gray-400 sm:text-left">Du jämför erbjudanden som kommer in och väljer själv.</p>
+      </section>
+
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-kungsbla-700">Sökes just nu</h2>
@@ -85,10 +116,18 @@ export default function HomePage() {
 
         {loading ? (
           <p className="text-sm text-gray-400">Laddar…</p>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-1 py-16 text-center">
+            <p className="text-sm font-medium text-gray-500">Något gick fel.</p>
+            <p className="text-xs text-gray-400">Vi kunde inte hämta sökningarna just nu.</p>
+            <button className="btn-secondary mt-3 !px-5 !py-2 text-xs" onClick={load}>
+              Försök igen
+            </button>
+          </div>
         ) : searches.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-16 text-center">
-            <p className="text-sm font-medium text-gray-500">Inga aktiva sökningar</p>
-            <p className="text-xs text-gray-400">Bli först att publicera vad du letar efter.</p>
+            <p className="text-sm font-medium text-gray-500">Ingen söker efter något just nu</p>
+            <p className="text-xs text-gray-400">Nya sökningar visas här när personer börjar leta.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,7 +145,10 @@ export default function HomePage() {
                   <span>{s.location}</span>
                   {s.budgetMax && <span className="font-semibold text-kungsbla-600">max {s.budgetMax} kr</span>}
                 </div>
-                <span className="text-xs text-guld-500">{s.offerCount} erbjudanden</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-guld-500">{s.offerCount} erbjudanden</span>
+                  <span className="text-xs font-semibold text-kungsbla-600">Lämna erbjudande →</span>
+                </div>
               </Link>
             ))}
           </div>
