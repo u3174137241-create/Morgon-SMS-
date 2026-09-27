@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [resetUrl, setResetUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -18,6 +20,7 @@ export default function ForgotPasswordPage() {
     const data = await res.json();
     setLoading(false);
     setMessage(data.message ?? "Om kontot finns har ett mejl skickats.");
+    setResetUrl(data.resetUrl ?? null);
   }
 
   return (
@@ -27,7 +30,14 @@ export default function ForgotPasswordPage() {
         <p className="mt-1 text-sm text-gray-500">Ange din e-postadress så skickar vi en länk för att välja ett nytt lösenord.</p>
       </div>
       {message ? (
-        <p className="rounded-xl bg-kungsbla-50 p-4 text-sm text-kungsbla-600">{message}</p>
+        <div className="flex flex-col gap-3 rounded-xl bg-kungsbla-50 p-4 text-sm text-kungsbla-600">
+          <p>{message}</p>
+          {resetUrl && (
+            <Link href={resetUrl} className="btn-primary w-fit">
+              Återställ lösenord nu
+            </Link>
+          )}
+        </div>
       ) : (
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           <input
