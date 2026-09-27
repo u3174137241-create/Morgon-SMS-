@@ -1,6 +1,6 @@
 const RESEND_API_URL = "https://api.resend.com/emails";
 
-function isEmailConfigured(): boolean {
+export function isEmailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 

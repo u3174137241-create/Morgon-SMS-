@@ -8,6 +8,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [verifyUrl, setVerifyUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,6 +26,7 @@ export default function RegisterPage() {
     setLoading(false);
     if (!res.ok) return setError(data.error ?? "Något gick fel.");
     setMessage(data.message);
+    setVerifyUrl(data.verifyUrl ?? null);
   }
 
   return (
@@ -36,7 +38,14 @@ export default function RegisterPage() {
         </p>
       </div>
       {message ? (
-        <p className="rounded-xl bg-kungsbla-50 p-4 text-sm text-kungsbla-600">{message}</p>
+        <div className="flex flex-col gap-3 rounded-xl bg-kungsbla-50 p-4 text-sm text-kungsbla-600">
+          <p>{message}</p>
+          {verifyUrl && (
+            <Link href={verifyUrl} className="btn-primary w-fit">
+              Bekräfta e-post nu
+            </Link>
+          )}
+        </div>
       ) : (
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           <input

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { generateRawToken, hashToken } from "@/lib/tokens";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationEmail, isEmailConfigured } from "@/lib/email";
 import { jsonError, jsonOk } from "@/lib/http";
 import { registerSchema } from "@/lib/validation";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rateLimit";
@@ -34,6 +34,17 @@ export async function POST(req: Request) {
 
   const verifyUrl = `${process.env.APP_BASE_URL ?? "http://localhost:3000"}/verifiera?token=${rawToken}`;
   await sendVerificationEmail(email, verifyUrl);
+
+  // E-post är inte konfigurerat i den här miljön (RESEND_API_KEY saknas) — utan
+  // detta skulle användaren aldrig kunna bekräfta sitt konto, eftersom länken
+  // bara loggas server-side. Skicka då länken direkt i svaret istället.
+  if (!isEmailConfigured()) {
+    return jsonOk({
+      ok: true,
+      message: "Konto skapat. E-post är inte konfigurerat ännu — bekräfta direkt här istället.",
+      verifyUrl,
+    });
+  }
 
   return jsonOk({ ok: true, message: "Konto skapat. Kolla din e-post för att bekräfta adressen." });
 }
