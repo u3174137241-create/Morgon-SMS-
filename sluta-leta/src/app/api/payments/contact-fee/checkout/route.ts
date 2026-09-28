@@ -36,21 +36,26 @@ export async function POST(req: Request) {
     );
   }
 
-  const customerId = await getOrCreateStripeCustomerId(user);
-  const session = await createContactFeeCheckoutSession({
-    transactionId: transaction.id,
-    contactFeeId: transaction.contactFee.id,
-    amountSek: transaction.contactFee.amount,
-    sellerId: user.id,
-    sellerEmail: user.email,
-    sellerStripeCustomerId: customerId,
-  });
+  try {
+    const customerId = await getOrCreateStripeCustomerId(user);
+    const session = await createContactFeeCheckoutSession({
+      transactionId: transaction.id,
+      contactFeeId: transaction.contactFee.id,
+      amountSek: transaction.contactFee.amount,
+      sellerId: user.id,
+      sellerEmail: user.email,
+      sellerStripeCustomerId: customerId,
+    });
 
-  await prisma.contactFee.update({
-    where: { id: transaction.contactFee.id },
-    data: { stripeCheckoutSessionId: session.id },
-  });
-  await transitionTransaction(prisma, transaction.id, "PAYMENT_PROCESSING", "Stripe checkout skapad");
+    await prisma.contactFee.update({
+      where: { id: transaction.contactFee.id },
+      data: { stripeCheckoutSessionId: session.id },
+    });
+    await transitionTransaction(prisma, transaction.id, "PAYMENT_PROCESSING", "Stripe checkout skapad");
 
-  return jsonOk({ checkoutUrl: session.url });
+    return jsonOk({ checkoutUrl: session.url });
+  } catch (err) {
+    console.error("[contact-fee/checkout] Stripe-anrop misslyckades", err);
+    return jsonError("Kunde inte starta betalningen just nu. Försök igen om en liten stund.", 502);
+  }
 }

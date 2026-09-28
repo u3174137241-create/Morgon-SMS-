@@ -19,6 +19,9 @@ export async function POST(req: Request) {
   // så svarets form aldrig läcker vilka e-postadresser som är registrerade.
   // Bara riktiga konton får ett token som faktiskt sparas och fungerar.
   const rawToken = generateRawToken();
+  const resetUrl = `${process.env.APP_BASE_URL ?? "http://localhost:3000"}/aterstall-losenord?token=${rawToken}`;
+
+  let emailSent = false;
   if (user) {
     await prisma.passwordResetToken.create({
       data: {
@@ -27,19 +30,24 @@ export async function POST(req: Request) {
         expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       },
     });
-    const resetUrl = `${process.env.APP_BASE_URL ?? "http://localhost:3000"}/aterstall-losenord?token=${rawToken}`;
-    await sendPasswordResetEmail(user.email, resetUrl);
+    if (isEmailConfigured()) {
+      try {
+        await sendPasswordResetEmail(user.email, resetUrl);
+        emailSent = true;
+      } catch (err) {
+        console.error("[reset-request] kunde inte skicka återställningsmejl", err);
+      }
+    }
   }
 
-  // E-post är inte konfigurerat i den här miljön — utan detta skulle ingen
-  // (varken riktiga eller obefintliga konton) någonsin komma vidare, eftersom
-  // länken annars bara loggas server-side. Skicka länken direkt i svaret
-  // istället, i båda fallen, så att formen inte avslöjar om kontot finns.
-  if (!isEmailConfigured()) {
-    const resetUrl = `${process.env.APP_BASE_URL ?? "http://localhost:3000"}/aterstall-losenord?token=${rawToken}`;
+  // E-post är inte konfigurerat, kontot finns inte, eller själva sändningen
+  // misslyckades — i alla dessa fall skulle användaren annars aldrig komma
+  // vidare. Skicka länken direkt i svaret istället, likadant i alla fall,
+  // så att formen aldrig avslöjar om kontot finns.
+  if (!emailSent) {
     return jsonOk({
       ok: true,
-      message: "E-post är inte konfigurerat ännu — om kontot finns kan du återställa direkt här istället.",
+      message: "E-post kunde inte skickas just nu — om kontot finns kan du återställa direkt här istället.",
       resetUrl,
     });
   }

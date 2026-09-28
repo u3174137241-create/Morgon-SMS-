@@ -9,12 +9,16 @@ export async function POST() {
     return jsonError("Plus-prenumeration är inte konfigurerad ännu (Stripe saknas).", 503);
   }
 
-  const customerId = await getOrCreateStripeCustomerId(user);
-  const session = await createPlusCheckoutSession({
-    userId: user.id,
-    userEmail: user.email,
-    stripeCustomerId: customerId,
-  });
-
-  return jsonOk({ checkoutUrl: session.url });
+  try {
+    const customerId = await getOrCreateStripeCustomerId(user);
+    const session = await createPlusCheckoutSession({
+      userId: user.id,
+      userEmail: user.email,
+      stripeCustomerId: customerId,
+    });
+    return jsonOk({ checkoutUrl: session.url });
+  } catch (err) {
+    console.error("[subscriptions/checkout] Stripe-anrop misslyckades", err);
+    return jsonError("Kunde inte starta betalningen just nu. Försök igen om en liten stund.", 502);
+  }
 }

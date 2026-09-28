@@ -33,15 +33,25 @@ export async function POST(req: Request) {
   });
 
   const verifyUrl = `${process.env.APP_BASE_URL ?? "http://localhost:3000"}/verifiera?token=${rawToken}`;
-  await sendVerificationEmail(email, verifyUrl);
 
-  // E-post är inte konfigurerat i den här miljön (RESEND_API_KEY saknas) — utan
-  // detta skulle användaren aldrig kunna bekräfta sitt konto, eftersom länken
-  // bara loggas server-side. Skicka då länken direkt i svaret istället.
-  if (!isEmailConfigured()) {
+  // E-post är inte konfigurerat, eller själva sändningen misslyckas (t.ex. att
+  // e-postleverantören avvisar avsändaren/mottagaren) — i båda fallen får
+  // kontot redan skapats i databasen, så användaren får aldrig fastna utan
+  // sätt att verifiera sig. Skicka då länken direkt i svaret istället.
+  let emailSent = false;
+  if (isEmailConfigured()) {
+    try {
+      await sendVerificationEmail(email, verifyUrl);
+      emailSent = true;
+    } catch (err) {
+      console.error("[register] kunde inte skicka verifieringsmejl", err);
+    }
+  }
+
+  if (!emailSent) {
     return jsonOk({
       ok: true,
-      message: "Konto skapat. E-post är inte konfigurerat ännu — bekräfta direkt här istället.",
+      message: "Konto skapat. E-post kunde inte skickas just nu — bekräfta direkt här istället.",
       verifyUrl,
     });
   }
