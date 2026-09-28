@@ -19,6 +19,7 @@ export async function POST() {
     return jsonOk({ checkoutUrl: session.url });
   } catch (err) {
     console.error("[subscriptions/checkout] Stripe-anrop misslyckades", err);
-    return jsonError("Kunde inte starta betalningen just nu. Försök igen om en liten stund.", 502);
+    const debug = err instanceof Error ? err.message : String(err);
+    return jsonError(`Kunde inte starta betalningen just nu. Försök igen om en liten stund. [debug: ${debug}]`, 502);
   }
 }
