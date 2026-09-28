@@ -1,0 +1,11 @@
+CREATE INDEX IF NOT EXISTS "AuditLog_actorId_idx" ON "AuditLog"("actorId");
+CREATE INDEX IF NOT EXISTS "Listing_userId_idx" ON "Listing"("userId");
+CREATE INDEX IF NOT EXISTS "ListingImage_listingId_idx" ON "ListingImage"("listingId");
+CREATE INDEX IF NOT EXISTS "Message_senderId_idx" ON "Message"("senderId");
+CREATE INDEX IF NOT EXISTS "Offer_listingId_idx" ON "Offer"("listingId");
+CREATE INDEX IF NOT EXISTS "OfferImage_offerId_idx" ON "OfferImage"("offerId");
+CREATE INDEX IF NOT EXISTS "Report_reporterId_idx" ON "Report"("reporterId");
+CREATE INDEX IF NOT EXISTS "Review_authorId_idx" ON "Review"("authorId");
+CREATE INDEX IF NOT EXISTS "Search_userId_idx" ON "Search"("userId");
+CREATE INDEX IF NOT EXISTS "SearchImage_searchId_idx" ON "SearchImage"("searchId");
+CREATE INDEX IF NOT EXISTS "UserBlock_blockedId_idx" ON "UserBlock"("blockedId");
