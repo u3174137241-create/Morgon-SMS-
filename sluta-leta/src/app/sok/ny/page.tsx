@@ -2,13 +2,16 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import ImageUploader from "@/app/components/ImageUploader";
+import { useCurrentUser } from "@/lib/useCurrentUser";
 
 const CONDITIONS = ["Spelar ingen roll", "Ny", "Begagnad", "Renoveringsobjekt"] as const;
 
 function CreateSearchForm() {
   const params = useSearchParams();
   const router = useRouter();
+  const { user, loading: userLoading } = useCurrentUser();
   const [text, setText] = useState(params.get("text") ?? "");
   const [condition, setCondition] = useState<(typeof CONDITIONS)[number]>("Spelar ingen roll");
   const [budgetMax, setBudgetMax] = useState("");
@@ -102,6 +105,15 @@ function CreateSearchForm() {
       <button className="btn-primary w-fit" type="submit" disabled={loading}>
         {loading ? "Skapar…" : "Skapa sökning — gratis"}
       </button>
+      {!userLoading && !user && (
+        <p className="text-xs text-gray-400">
+          Inget konto än?{" "}
+          <Link href="/registrera" className="font-medium text-kungsbla-600 underline">
+            Skapa konto gratis
+          </Link>{" "}
+          — tar under en minut.
+        </p>
+      )}
     </form>
   );
 }
