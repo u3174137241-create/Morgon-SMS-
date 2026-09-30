@@ -31,7 +31,7 @@ export async function createContactFeeCheckoutSession(params: {
   sellerStripeCustomerId: string | null;
 }): Promise<Stripe.Checkout.Session> {
   const stripe = getStripeClient();
-  return stripe.checkout.sessions.create({
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     mode: "payment",
     customer: params.sellerStripeCustomerId ?? undefined,
     customer_email: params.sellerStripeCustomerId ? undefined : params.sellerEmail,
@@ -53,7 +53,12 @@ export async function createContactFeeCheckoutSession(params: {
     },
     success_url: `${baseUrl()}/meddelanden/${params.transactionId}?betalning=klar`,
     cancel_url: `${baseUrl()}/meddelanden/${params.transactionId}?betalning=avbruten`,
-  });
+  };
+  // Managed Payments (aktiverat som standard på kontot) kräver en tax_code på
+  // produkten, som vi inte sätter för dessa ad-hoc-priser. Stäng av det per session
+  // istället för att kräva skattekonfiguration för varje betalning.
+  (sessionParams as Record<string, unknown>).managed_payments = { enabled: false };
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 export async function createPlusCheckoutSession(params: {
@@ -65,7 +70,7 @@ export async function createPlusCheckoutSession(params: {
   const priceId = process.env.STRIPE_PLUS_PRICE_ID;
   if (!priceId) throw new Error("STRIPE_PLUS_PRICE_ID saknas i miljövariablerna.");
 
-  return stripe.checkout.sessions.create({
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     mode: "subscription",
     customer: params.stripeCustomerId ?? undefined,
     customer_email: params.stripeCustomerId ? undefined : params.userEmail,
@@ -73,7 +78,11 @@ export async function createPlusCheckoutSession(params: {
     metadata: { userId: params.userId, kind: "plus_subscription" },
     success_url: `${baseUrl()}/plus?status=klar`,
     cancel_url: `${baseUrl()}/plus?status=avbruten`,
-  });
+  };
+  // Se kommentar i createContactFeeCheckoutSession: kringgår kravet på
+  // produkt-tax_code som Managed Payments annars ställer på Plus-priset.
+  (sessionParams as Record<string, unknown>).managed_payments = { enabled: false };
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 export async function createBillingPortalSession(stripeCustomerId: string): Promise<Stripe.BillingPortal.Session> {
