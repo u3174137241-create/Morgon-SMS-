@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const parsed = createListingSchema.safeParse(body);
-  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata", 400);
+  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata.", 400);
   const { title, description, price, location, images } = parsed.data;
 
   const parsedText = parseSearchText(`${title} ${description}`);

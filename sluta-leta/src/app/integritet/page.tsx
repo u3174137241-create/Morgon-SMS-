@@ -7,7 +7,7 @@ export default function PrivacyPage() {
       <p className="text-xs text-gray-400">Senast uppdaterad: 2026</p>
 
       <p>
-        Den här sidan förklarar vilka personuppgifter Sluta Leta samlar in, varför, och vilka
+        Den här sidan förklarar vilka personuppgifter Sluta Leta samlar in, varför och vilka
         rättigheter du har enligt GDPR.
       </p>
 

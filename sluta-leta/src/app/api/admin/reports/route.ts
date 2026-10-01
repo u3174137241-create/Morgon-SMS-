@@ -24,7 +24,7 @@ export async function PATCH(req: Request) {
   const id = body?.id;
   const status = body?.status;
   if (typeof id !== "string" || (status !== "ACTIONED" && status !== "DISMISSED")) {
-    return jsonError("Ogiltig indata", 400);
+    return jsonError("Ogiltig indata.", 400);
   }
 
   const report = await prisma.report.update({ where: { id }, data: { status } });

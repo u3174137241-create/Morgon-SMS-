@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return jsonError("Ogiltig indata", 400);
+  if (!parsed.success) return jsonError("Ogiltig indata.", 400);
 
   const transaction = await prisma.transaction.findUnique({
     where: { id: parsed.data.transactionId },

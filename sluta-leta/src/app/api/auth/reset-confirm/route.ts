@@ -7,7 +7,7 @@ import { confirmPasswordResetSchema } from "@/lib/validation";
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = confirmPasswordResetSchema.safeParse(body);
-  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata", 400);
+  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata.", 400);
 
   const tokenHash = hashToken(parsed.data.token);
   const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });

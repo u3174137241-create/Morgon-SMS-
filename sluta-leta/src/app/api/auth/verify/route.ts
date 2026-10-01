@@ -8,7 +8,7 @@ const schema = z.object({ token: z.string().min(10) });
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return jsonError("Ogiltig token", 400);
+  if (!parsed.success) return jsonError("Ogiltig token.", 400);
 
   const tokenHash = hashToken(parsed.data.token);
   const record = await prisma.emailVerificationToken.findUnique({ where: { tokenHash } });

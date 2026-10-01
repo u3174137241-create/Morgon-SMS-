@@ -9,7 +9,7 @@ import { publicProfile } from "@/lib/auth";
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = loginSchema.safeParse(body);
-  if (!parsed.success) return jsonError("Ogiltig indata", 400);
+  if (!parsed.success) return jsonError("Ogiltig indata.", 400);
   const { email, password } = parsed.data;
 
   const { allowed, retryAfterMs } = rateLimit(clientKeyFromRequest(req, `login:${email}`), 8, 15 * 60 * 1000);

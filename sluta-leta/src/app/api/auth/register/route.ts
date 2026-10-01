@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
-  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata", 400);
+  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata.", 400);
   const { email, password, name } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });

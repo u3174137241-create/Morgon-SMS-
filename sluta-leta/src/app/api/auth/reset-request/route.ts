@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const parsed = requestPasswordResetSchema.safeParse(body);
-  if (!parsed.success) return jsonError("Ogiltig e-postadress", 400);
+  if (!parsed.success) return jsonError("Ogiltig e-postadress.", 400);
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
 

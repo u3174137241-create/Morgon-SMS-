@@ -36,7 +36,7 @@ export default function TermsPage() {
       <h2 className="mt-2 font-bold text-kungsbla-700">4. Regler för innehåll</h2>
       <p>
         Du får inte publicera olagligt, kränkande, vilseledande eller stötande innehåll, inte utge dig
-        för att vara någon annan, och inte använda tjänsten för bedrägeri eller trakasserier. Vi kan
+        för att vara någon annan och inte använda tjänsten för bedrägeri eller trakasserier. Vi kan
         ta bort innehåll och stänga av konton som bryter mot detta, med eller utan förvarning.
       </p>
 

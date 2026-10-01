@@ -15,7 +15,7 @@ async function assertParticipant(userId: string, transactionId: string) {
   }
   // Chatten är låst tills kontaktåtkomst är beviljad — oavsett vad frontend skickar.
   if (!transaction.conversation) {
-    return { error: jsonError("Chatten är låst tills köparen godkänt och kontaktavgiften (om någon) är betald.", 403) };
+    return { error: jsonError("Chatten är låst tills köparen har godkänt erbjudandet och kontaktavgiften (om någon) är betald.", 403) };
   }
   return { transaction };
 }
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const parsed = sendMessageSchema.safeParse(body);
-  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata", 400);
+  if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata.", 400);
   const { transactionId, type, content, mediaUrl } = parsed.data;
 
   if (type === "TEXT" && !content) return jsonError("Meddelandet saknar text.", 400);
