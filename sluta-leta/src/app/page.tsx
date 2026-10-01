@@ -50,8 +50,11 @@ export default function HomePage() {
     <div className="flex flex-col gap-8">
       <section className="flex flex-col items-center gap-3 py-4 text-center">
         <p className="text-xs font-bold uppercase tracking-wider text-guld-600">Sluta Leta</p>
-        <h1 className="text-3xl font-bold text-gray-900">Skriv vad du vill köpa. Säljare hör av sig till dig.</h1>
-        <p className="max-w-xs text-sm text-gray-500">Helt gratis för dig som köpare.</p>
+        <h1 className="text-3xl font-bold text-gray-900">Hitta det du söker — utan att leta.</h1>
+        <p className="max-w-sm text-sm text-gray-500">
+          Sluta Leta är marknadsplatsen där du beskriver vad du vill köpa, och säljare som har det
+          hör av sig direkt till dig. Helt gratis.
+        </p>
 
         <div className="mt-3 flex w-full max-w-sm flex-col gap-3">
           <Link href="/sok/ny" className="btn-primary w-full">
