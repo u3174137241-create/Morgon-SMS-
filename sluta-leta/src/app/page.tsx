@@ -50,11 +50,8 @@ export default function HomePage() {
     <div className="flex flex-col gap-8">
       <section className="flex flex-col items-center gap-3 py-4 text-center">
         <p className="text-xs font-bold uppercase tracking-wider text-guld-600">Sluta Leta</p>
-        <h1 className="text-3xl font-bold text-gray-900">Sveriges omvända marknadsplats.</h1>
-        <p className="max-w-xs text-sm text-gray-500">
-          Du skriver vad du vill köpa. Säljare konkurrerar om att sälja till dig. Helt gratis att
-          söka.
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">Skriv vad du vill köpa. Säljare hör av sig till dig.</h1>
+        <p className="max-w-xs text-sm text-gray-500">Helt gratis för dig som köpare.</p>
 
         <div className="mt-3 flex w-full max-w-sm flex-col gap-3">
           <Link href="/sok/ny" className="btn-primary w-full">
