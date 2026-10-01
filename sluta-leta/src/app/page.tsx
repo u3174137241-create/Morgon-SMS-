@@ -69,7 +69,7 @@ export default function HomePage() {
           </Link>
         </div>
         <p className="mt-1 text-xs text-gray-400">
-          ✓ Gratis att söka · ✓ Ingen köptvång · ✓ Du väljer själv
+          ✓ Gratis att söka · ✓ Du väljer själv
         </p>
       </section>
 
@@ -77,7 +77,7 @@ export default function HomePage() {
         {[
           { step: "1", title: "Skriv vad du söker", text: "T.ex. ”en cykel, max 1000 kr, Stockholm”." },
           { step: "2", title: "Säljare hör av sig", text: "De som har det du letar efter skickar ett erbjudande till dig." },
-          { step: "3", title: "Du väljer", text: "Ingen köptvång. Du väljer själv det erbjudande som passar dig bäst." },
+          { step: "3", title: "Du väljer", text: "Du väljer själv det erbjudande som passar dig bäst." },
         ].map((s) => (
           <div key={s.step} className="card flex flex-col gap-1">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-kungsbla-50 text-xs font-bold text-kungsbla-600">
