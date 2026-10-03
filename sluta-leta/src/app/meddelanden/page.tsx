@@ -60,7 +60,7 @@ export default function MessagesListPage() {
           <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="h-10 w-10 text-gray-300">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9A1.5 1.5 0 0 1 18.5 16H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5v-9Z" />
           </svg>
-          <p className="text-sm font-medium text-gray-500">Inga meddelanden ännu</p>
+          <p className="text-sm font-medium text-gray-500">Inga meddelanden ännu.</p>
           <p className="max-w-xs text-xs text-gray-400">
             Här hamnar konversationen så fort du accepterar ett erbjudande, eller ett erbjudande du
             lämnat blir accepterat.

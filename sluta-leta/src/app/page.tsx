@@ -52,7 +52,7 @@ export default function HomePage() {
         <p className="text-xs font-bold uppercase tracking-wider text-guld-600">Sluta Leta</p>
         <h1 className="text-3xl font-bold text-gray-900">Hitta det du söker — utan att leta.</h1>
         <p className="max-w-sm text-sm text-gray-500">
-          Sluta Leta är marknadsplatsen där du beskriver vad du vill köpa, och säljare som har det
+          Sluta Leta är marknadsplatsen där du beskriver vad du vill köpa och säljare som har det
           hör av sig direkt till dig. Helt gratis.
         </p>
 
@@ -126,7 +126,7 @@ export default function HomePage() {
           </div>
         ) : searches.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-16 text-center">
-            <p className="text-sm font-medium text-gray-500">Ingen söker efter något just nu</p>
+            <p className="text-sm font-medium text-gray-500">Ingen söker efter något just nu.</p>
             <p className="text-xs text-gray-400">Nya sökningar visas här när personer börjar leta.</p>
           </div>
         ) : (

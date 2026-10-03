@@ -109,7 +109,7 @@ export default function ExplorePage() {
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center gap-1 py-16 text-center">
-          <p className="text-sm font-medium text-gray-500">Ingen söker efter detta just nu</p>
+          <p className="text-sm font-medium text-gray-500">Ingen söker efter detta just nu.</p>
           <p className="text-xs text-gray-400">Nya sökningar visas här när personer börjar leta.</p>
           <Link href="/" className="btn-primary mt-3 !px-5 !py-2 text-xs">
             Skapa sökning

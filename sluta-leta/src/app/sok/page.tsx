@@ -73,7 +73,7 @@ export default function SearchPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-1 py-12 text-center">
-          <p className="text-sm font-medium text-gray-500">Inga träffar</p>
+          <p className="text-sm font-medium text-gray-500">Inga träffar.</p>
           <p className="text-xs text-gray-400">
             {q ? "Inget matchade din sökning just nu." : "Ingen söker efter något just nu."}
           </p>
