@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Sluta Leta",
+    "slug": "sluta-leta",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#ffffff",
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#1d4ed8"
+        }
+      ]
+    ],
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "se.slutaleta.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Sluta Leta behöver kameran för att du ska kunna ta bilder till dina sökningar och erbjudanden.",
+        "NSPhotoLibraryUsageDescription": "Sluta Leta behöver tillgång till dina bilder för att du ska kunna bifoga foton i dina sökningar och erbjudanden."
+      }
+    },
+    "android": {
+      "package": "se.slutaleta.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
