@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PLUS_MONTHLY_PRICE_SEK } from "@/lib/fees";
 
 type Subscription = {
@@ -10,7 +11,9 @@ type Subscription = {
   cancelAtPeriodEnd: boolean;
 } | null;
 
-export default function PlusPage() {
+function PlusPageContent() {
+  const searchParams = useSearchParams();
+  const checkoutStatus = searchParams.get("status");
   const [subscription, setSubscription] = useState<Subscription>(null);
   const [stripeConfigured, setStripeConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -91,6 +94,15 @@ export default function PlusPage() {
         <p>✓ Inget tak på hur många affärer du gör</p>
       </div>
 
+      {checkoutStatus === "klar" && (
+        <p className="rounded-xl bg-kungsbla-50 p-3 text-sm text-kungsbla-600">
+          Tack! Din betalning behandlas — prenumerationen aktiveras så snart den är bekräftad.
+        </p>
+      )}
+      {checkoutStatus === "avbruten" && (
+        <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-500">Betalningen avbröts. Inget drogs från ditt kort.</p>
+      )}
+
       {loading ? (
         <p className="text-sm text-gray-400">Laddar…</p>
       ) : needsLogin ? (
@@ -111,9 +123,14 @@ export default function PlusPage() {
         <p className="text-sm text-gray-400">Betalningar är inte konfigurerade ännu.</p>
       ) : isActive ? (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-kungsbla-600">
-            Din prenumeration är aktiv{subscription?.cancelAtPeriodEnd ? " (avslutas vid periodens slut)" : ""}.
-          </p>
+          <p className="text-sm text-kungsbla-600">Du har Sluta Leta Plus. Dina chattar låses upp utan extra kostnad.</p>
+          {subscription?.currentPeriodEnd && (
+            <p className="text-xs text-gray-400">
+              {subscription.cancelAtPeriodEnd
+                ? `Avslutas ${new Date(subscription.currentPeriodEnd).toLocaleDateString("sv-SE")} — du har tillgång till Plus fram till då.`
+                : `Nästa debitering: ${new Date(subscription.currentPeriodEnd).toLocaleDateString("sv-SE")}.`}
+            </p>
+          )}
           <button className="btn-secondary w-fit self-center disabled:opacity-50" onClick={manage} disabled={submitting}>
             {submitting ? "Öppnar…" : "Hantera prenumeration"}
           </button>
@@ -125,5 +142,13 @@ export default function PlusPage() {
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
+  );
+}
+
+export default function PlusPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-gray-400">Laddar…</p>}>
+      <PlusPageContent />
+    </Suspense>
   );
 }

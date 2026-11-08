@@ -66,15 +66,24 @@ export async function createPlusCheckoutSession(params: {
   userEmail: string;
   stripeCustomerId: string | null;
 }): Promise<Stripe.Checkout.Session> {
+  const { PLUS_MONTHLY_PRICE_SEK } = await import("@/lib/fees");
   const stripe = getStripeClient();
-  const priceId = process.env.STRIPE_PLUS_PRICE_ID;
-  if (!priceId) throw new Error("STRIPE_PLUS_PRICE_ID saknas i miljövariablerna.");
 
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     mode: "subscription",
     customer: params.stripeCustomerId ?? undefined,
     customer_email: params.stripeCustomerId ? undefined : params.userEmail,
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [
+      {
+        price_data: {
+          currency: "sek",
+          unit_amount: PLUS_MONTHLY_PRICE_SEK * 100,
+          recurring: { interval: "month" },
+          product_data: { name: "Sluta Leta Plus" },
+        },
+        quantity: 1,
+      },
+    ],
     metadata: { userId: params.userId, kind: "plus_subscription" },
     success_url: `${baseUrl()}/plus?status=klar`,
     cancel_url: `${baseUrl()}/plus?status=avbruten`,

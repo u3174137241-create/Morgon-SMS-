@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   });
   if (!transaction) return jsonError("Transaktionen hittades inte.", 404);
   if (transaction.sellerId !== user.id) return jsonError("Bara säljaren kan betala kontaktavgiften.", 403);
-  if (transaction.state !== "CONTACT_FEE_PENDING" || !transaction.contactFee) {
+  if (!["CONTACT_FEE_PENDING", "FAILED"].includes(transaction.state) || !transaction.contactFee) {
     return jsonError("Ingen kontaktavgift väntar på betalning för den här transaktionen.", 400);
   }
   if (transaction.contactFee.status === "PAID") return jsonError("Avgiften är redan betald.", 409);
@@ -49,8 +49,13 @@ export async function POST(req: Request) {
 
     await prisma.contactFee.update({
       where: { id: transaction.contactFee.id },
-      data: { stripeCheckoutSessionId: session.id },
+      data: { stripeCheckoutSessionId: session.id, status: "PENDING" },
     });
+    // Ett tidigare misslyckat försök måste först tillbaka till CONTACT_FEE_PENDING
+    // innan det nya försöket kan gå vidare till PAYMENT_PROCESSING.
+    if (transaction.state === "FAILED") {
+      await transitionTransaction(prisma, transaction.id, "CONTACT_FEE_PENDING", "Nytt betalningsförsök");
+    }
     await transitionTransaction(prisma, transaction.id, "PAYMENT_PROCESSING", "Stripe checkout skapad");
 
     return jsonOk({ checkoutUrl: session.url });

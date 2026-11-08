@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { TRANSACTION_STATE_LABELS } from "@/lib/transactionLabels";
 
@@ -29,8 +29,10 @@ type Message = {
   createdAt: string;
 };
 
-export default function TransactionThreadPage() {
+function TransactionThreadContent() {
   const { transactionId } = useParams<{ transactionId: string }>();
+  const searchParams = useSearchParams();
+  const paymentStatus = searchParams.get("betalning");
   const { user } = useCurrentUser();
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -154,22 +156,53 @@ export default function TransactionThreadPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {isSeller && transaction.state === "CONTACT_FEE_PENDING" && transaction.contactFee && (
-        <div className="card flex flex-col gap-2 border-guld-400/40 bg-guld-400/5">
-          <p className="text-sm text-gray-700">
-            Köparen har godkänt ditt erbjudande! Betala kontaktavgiften ({transaction.contactFee.amount} kr) för
-            att låsa upp chatten.
+      {paymentStatus === "klar" && (
+        <p className="rounded-xl bg-kungsbla-50 p-3 text-sm text-kungsbla-600">
+          Tack! Din betalning behandlas — chatten låses upp så snart den är bekräftad.
+        </p>
+      )}
+      {paymentStatus === "avbruten" && (
+        <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-500">Betalningen avbröts. Inget drogs från ditt kort.</p>
+      )}
+
+      {!transaction.conversation && ["CONTACT_FEE_PENDING", "PAYMENT_PROCESSING", "FAILED"].includes(transaction.state) && (
+        <div className="card flex flex-col gap-3 border-guld-400/40 bg-guld-400/5">
+          <p className="flex items-center gap-2 text-sm font-semibold text-kungsbla-700">
+            <span aria-hidden>🔒</span> Chatten är låst
           </p>
-          <button className="btn-primary w-fit" onClick={payContactFee} disabled={payingUp}>
-            {payingUp ? "Skapar betalning…" : `Betala ${transaction.contactFee.amount} kr`}
-          </button>
+          {isSeller && transaction.state === "CONTACT_FEE_PENDING" && transaction.contactFee && (
+            <>
+              <p className="text-sm text-gray-700">
+                Ditt bud har godkänts! Lås upp chatten för {transaction.contactFee.amount} kr och fortsätt affären.
+              </p>
+              <button className="btn-primary w-fit" onClick={payContactFee} disabled={payingUp}>
+                {payingUp ? "Skapar betalning…" : `Lås upp chatten — ${transaction.contactFee.amount} kr`}
+              </button>
+              <p className="text-xs text-gray-400">
+                Har du Sluta Leta Plus slipper du den här avgiften helt.{" "}
+                <a href="/plus" className="font-medium text-kungsbla-600 underline">
+                  Läs mer om Plus
+                </a>
+                .
+              </p>
+            </>
+          )}
+          {isBuyer && transaction.state === "CONTACT_FEE_PENDING" && (
+            <p className="text-sm text-gray-500">Väntar på att säljaren låser upp chatten…</p>
+          )}
+          {transaction.state === "PAYMENT_PROCESSING" && <p className="text-sm text-gray-500">Behandlar betalning…</p>}
+          {transaction.state === "FAILED" && isSeller && (
+            <>
+              <p className="text-sm text-red-600">Betalningen misslyckades eller avbröts. Försök igen för att låsa upp chatten.</p>
+              <button className="btn-primary w-fit" onClick={payContactFee} disabled={payingUp}>
+                {payingUp ? "Skapar betalning…" : "Försök igen"}
+              </button>
+            </>
+          )}
+          {transaction.state === "FAILED" && isBuyer && (
+            <p className="text-sm text-gray-500">Säljarens betalning misslyckades. Väntar på ett nytt försök.</p>
+          )}
         </div>
-      )}
-      {isBuyer && transaction.state === "CONTACT_FEE_PENDING" && (
-        <p className="text-sm text-gray-500">Väntar på att säljaren betalar kontaktavgiften…</p>
-      )}
-      {transaction.state === "PAYMENT_PROCESSING" && (
-        <p className="text-sm text-gray-500">Behandlar betalning…</p>
       )}
 
       {transaction.conversation && (
@@ -239,5 +272,13 @@ export default function TransactionThreadPage() {
       )}
       {reviewSent && <p className="text-sm text-kungsbla-600">Tack för din recension!</p>}
     </div>
+  );
+}
+
+export default function TransactionThreadPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-gray-400">Laddar…</p>}>
+      <TransactionThreadContent />
+    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import { PLUS_MONTHLY_PRICE_SEK } from "@/lib/fees";
 
 type Profile = {
   id: string;
@@ -244,7 +245,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2 text-base font-bold">
             <span aria-hidden>★</span> Sluta Leta Plus
           </div>
-          <p className="text-sm text-white/90">99 kr/mån — inga kontaktavgifter, alla säljarfunktioner</p>
+          <p className="text-sm text-white/90">{PLUS_MONTHLY_PRICE_SEK} kr/mån — inga kontaktavgifter, alla säljarfunktioner</p>
           <Link href="/plus" className="w-fit rounded-full bg-white px-5 py-2 text-sm font-semibold text-guld-600">
             Aktivera Plus
           </Link>
