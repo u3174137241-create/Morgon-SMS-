@@ -55,6 +55,10 @@ export async function POST(req: Request) {
         if (session.metadata?.kind === "contact_fee") await handleContactFeeExpiredOrFailed(session);
         break;
       }
+      case "charge.refunded": {
+        await handleChargeRefunded(event.data.object as Stripe.Charge);
+        break;
+      }
       default:
         break;
     }
@@ -124,6 +128,46 @@ async function handleContactFeeExpiredOrFailed(session: Stripe.Checkout.Session)
     if (!fee || fee.status === "PAID") return;
     await tx.contactFee.update({ where: { id: contactFeeId }, data: { status: "FAILED" } });
     await transitionTransaction(tx, transactionId, "FAILED", "Betalningssession gick ut eller misslyckades");
+  });
+}
+
+// Återbetalningar görs av operatören direkt i Stripes dashboard — vi bygger
+// ingen egen adminfunktion för det. Den här hanteraren reagerar bara på
+// händelsen så att databasen hamnar i rätt tillstånd när det sker.
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  const paymentIntentId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+  if (!paymentIntentId) return;
+
+  const fullyRefunded = charge.amount_refunded >= charge.amount;
+  if (!fullyRefunded) {
+    console.warn(`[stripe-webhook] Delvis återbetalning för payment_intent ${paymentIntentId} hanteras inte automatiskt.`);
+    return;
+  }
+
+  const fee = await prisma.contactFee.findUnique({ where: { stripePaymentIntentId: paymentIntentId } });
+  if (!fee || fee.status !== "PAID") return;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.contactFee.update({ where: { id: fee.id }, data: { status: "REFUNDED" } });
+    await tx.refund.upsert({
+      where: { contactFeeId: fee.id },
+      create: { contactFeeId: fee.id, amount: fee.amount, reason: "Återbetalad via Stripe", status: "REFUNDED", resolvedAt: new Date() },
+      update: { status: "REFUNDED", resolvedAt: new Date() },
+    });
+
+    const transaction = await tx.transaction.findUnique({ where: { id: fee.transactionId } });
+    if (!transaction || transaction.state === "REFUNDED") return;
+    if (transaction.state !== "REFUND_PENDING") {
+      await transitionTransaction(tx, transaction.id, "REFUND_PENDING", "Återbetalning registrerad från Stripe");
+    }
+    await transitionTransaction(tx, transaction.id, "REFUNDED", "Kontaktavgift återbetald");
+
+    await tx.notification.createMany({
+      data: [
+        { userId: transaction.buyerId, type: "TRANSACTION_UPDATED", payload: { transactionId: transaction.id, reason: "refunded" } },
+        { userId: transaction.sellerId, type: "TRANSACTION_UPDATED", payload: { transactionId: transaction.id, reason: "refunded" } },
+      ],
+    });
   });
 }
 
