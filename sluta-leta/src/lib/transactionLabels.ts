@@ -20,3 +20,12 @@ export const SEARCH_STATUS_LABELS: Record<string, string> = {
   FULFILLED: "Hittad",
   CANCELLED: "Avslutad",
 };
+
+export const OFFER_STATUS_LABELS: Record<string, string> = {
+  SENT: "Skickat",
+  VIEWED: "Visat av köparen",
+  ACCEPTED: "Godkänt",
+  DECLINED: "Ej aktuellt",
+  WITHDRAWN: "Återkallat",
+  EXPIRED: "Utgånget",
+};

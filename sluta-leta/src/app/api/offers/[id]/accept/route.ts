@@ -20,7 +20,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (!offer.search || offer.search.userId !== user.id) {
     return jsonError("Bara köparen kan godkänna det här erbjudandet.", 403);
   }
-  if (offer.status !== "SENT") return jsonError("Erbjudandet är inte längre öppet.", 400);
+  if (!["SENT", "VIEWED"].includes(offer.status)) return jsonError("Erbjudandet är inte längre öppet.", 400);
   if (offer.transaction) return jsonError("Erbjudandet är redan godkänt.", 409);
   if (offer.sellerId === user.id) return jsonError("Du kan inte godkänna ditt eget erbjudande.", 400);
 

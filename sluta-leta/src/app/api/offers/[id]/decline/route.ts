@@ -13,7 +13,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (!offer.search || offer.search.userId !== user.id) {
     return jsonError("Du kan inte ändra det här erbjudandet.", 403);
   }
-  if (offer.status !== "SENT") return jsonError("Erbjudandet är redan hanterat.", 400);
+  if (!["SENT", "VIEWED"].includes(offer.status)) return jsonError("Erbjudandet är redan hanterat.", 400);
 
   const updated = await prisma.offer.update({ where: { id }, data: { status: "DECLINED" } });
   return jsonOk({ offer: updated });

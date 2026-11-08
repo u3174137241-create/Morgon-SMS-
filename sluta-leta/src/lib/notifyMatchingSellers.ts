@@ -30,27 +30,28 @@ export async function notifyMatchingSellersForSearch(search: Search): Promise<nu
       : [],
   };
 
-  const matchedListings = listings.filter((listing) => {
-    const candidate: MatchCandidate = {
-      itemType: listing.type,
-      price: listing.price,
-      location: listing.location,
-      brand: listing.brand,
-      model: listing.model,
-      condition: listing.condition,
-      text: `${listing.title} ${listing.description}`,
-    };
-    const result = scoreMatch(req, candidate);
-    return result.passesHardRequirements && result.score >= MATCH_NOTIFY_THRESHOLD;
-  });
+  const matchedListings = listings
+    .map((listing) => {
+      const candidate: MatchCandidate = {
+        itemType: listing.type,
+        price: listing.price,
+        location: listing.location,
+        brand: listing.brand,
+        model: listing.model,
+        condition: listing.condition,
+        text: `${listing.title} ${listing.description}`,
+      };
+      return { listing, result: scoreMatch(req, candidate) };
+    })
+    .filter(({ result }) => result.passesHardRequirements && result.score >= MATCH_NOTIFY_THRESHOLD);
 
   if (matchedListings.length === 0) return 0;
 
   await prisma.notification.createMany({
-    data: matchedListings.map((listing) => ({
+    data: matchedListings.map(({ listing, result }) => ({
       userId: listing.userId,
       type: "NEW_MATCH",
-      payload: { searchId: search.id, listingId: listing.id, title: search.title },
+      payload: { searchId: search.id, listingId: listing.id, title: search.title, reasons: result.reasons },
     })),
   });
 

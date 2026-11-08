@@ -92,6 +92,24 @@ export function scoreMatch(req: MatchRequirements, candidate: MatchCandidate): M
   return { passesHardRequirements: true, score: Math.min(1, Math.round(score * 1000) / 1000), reasons };
 }
 
+const REASON_LABELS: Record<string, string> = {
+  plats_match: "Samma plats",
+  brand_match: "Rätt märke",
+  model_match: "Rätt modell",
+  condition_match: "Rätt skick",
+};
+
+// Gör maskinens reason-koder (t.ex. "keywords:3") begripliga för en vanlig användare.
+export function describeMatchReasons(reasons: string[]): string[] {
+  return reasons.map((reason) => {
+    if (reason.startsWith("keywords:")) {
+      const count = Number(reason.split(":")[1]) || 0;
+      return count === 1 ? "1 gemensamt sökord" : `${count} gemensamma sökord`;
+    }
+    return REASON_LABELS[reason] ?? reason;
+  });
+}
+
 export function rankCandidates<T>(
   req: MatchRequirements,
   candidates: Array<{ item: T; candidate: MatchCandidate }>

@@ -4,11 +4,14 @@ import { useEffect, useState, useCallback, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import ImageUploader from "@/app/components/ImageUploader";
-import { SEARCH_STATUS_LABELS } from "@/lib/transactionLabels";
+import { SEARCH_STATUS_LABELS, OFFER_STATUS_LABELS } from "@/lib/transactionLabels";
 
 type Offer = {
   id: string;
   price: number;
+  shippingCost: number | null;
+  estimatedDeliveryDays: number | null;
+  savedByBuyerAt: string | null;
   message: string;
   status: string;
   images: { url: string }[];
@@ -45,6 +48,8 @@ function SearchDetailContent() {
   const [error, setError] = useState<string | null>(null);
 
   const [offerPrice, setOfferPrice] = useState("");
+  const [offerShippingCost, setOfferShippingCost] = useState("");
+  const [offerDeliveryDays, setOfferDeliveryDays] = useState("");
   const [offerMessage, setOfferMessage] = useState("");
   const [offerImages, setOfferImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -73,14 +78,31 @@ function SearchDetailContent() {
     const res = await fetch("/api/offers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ searchId: id, price: Number(offerPrice), message: offerMessage, images: offerImages }),
+      body: JSON.stringify({
+        searchId: id,
+        price: Number(offerPrice),
+        shippingCost: offerShippingCost ? Number(offerShippingCost) : undefined,
+        estimatedDeliveryDays: offerDeliveryDays ? Number(offerDeliveryDays) : undefined,
+        message: offerMessage,
+        images: offerImages,
+      }),
     });
     const data = await res.json();
     setSubmitting(false);
     if (!res.ok) return setActionMessage(data.error);
     setOfferPrice("");
+    setOfferShippingCost("");
+    setOfferDeliveryDays("");
     setOfferMessage("");
     setOfferImages([]);
+    load();
+  }
+
+  async function toggleSaveOffer(offerId: string, saved: boolean) {
+    setActionMessage(null);
+    const res = await fetch(`/api/offers/${offerId}/save`, { method: saved ? "DELETE" : "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return setActionMessage(data.error ?? "Något gick fel.");
     load();
   }
 
@@ -208,12 +230,34 @@ function SearchDetailContent() {
                     {offer.seller.dealsCompleted} genomförda affärer
                   </p>
                   <p className="text-sm text-gray-700">{offer.message}</p>
+                  {(offer.shippingCost != null || offer.estimatedDeliveryDays != null) && (
+                    <p className="text-xs text-gray-400">
+                      {offer.shippingCost != null
+                        ? offer.shippingCost === 0
+                          ? "Fri frakt"
+                          : `+ ${offer.shippingCost} kr frakt`
+                        : ""}
+                      {offer.shippingCost != null && offer.estimatedDeliveryDays != null ? " · " : ""}
+                      {offer.estimatedDeliveryDays != null ? `Leverans inom ${offer.estimatedDeliveryDays} dagar` : ""}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-lg font-bold text-kungsbla-600">{offer.price} kr</span>
-                {isOwner && offer.status === "SENT" && (
+                <div className="text-right">
+                  <span className="text-lg font-bold text-kungsbla-600">{offer.price} kr</span>
+                  {offer.shippingCost != null && offer.shippingCost > 0 && (
+                    <p className="text-xs text-gray-400">Totalt {offer.price + offer.shippingCost} kr m. frakt</p>
+                  )}
+                </div>
+                {isOwner && ["SENT", "VIEWED"].includes(offer.status) && (
                   <div className="flex gap-2">
+                    <button
+                      className="btn-secondary !px-3 !py-1.5 text-xs"
+                      onClick={() => toggleSaveOffer(offer.id, !!offer.savedByBuyerAt)}
+                    >
+                      {offer.savedByBuyerAt ? "★ Sparad" : "☆ Spara"}
+                    </button>
                     <button className="btn-primary !px-3 !py-1.5 text-xs" onClick={() => acceptOffer(offer.id)}>
                       Ge åtkomst
                     </button>
@@ -222,10 +266,8 @@ function SearchDetailContent() {
                     </button>
                   </div>
                 )}
-                {offer.status !== "SENT" && (
-                  <span className="text-xs font-medium text-gray-400">
-                    {offer.status === "ACCEPTED" ? "Godkänt" : "Ej aktuellt"}
-                  </span>
+                {!["SENT", "VIEWED"].includes(offer.status) && (
+                  <span className="text-xs font-medium text-gray-400">{OFFER_STATUS_LABELS[offer.status] ?? offer.status}</span>
                 )}
               </div>
             </div>
@@ -252,6 +294,26 @@ function SearchDetailContent() {
               onChange={(e) => setOfferPrice(e.target.value)}
               required
             />
+            <div className="flex gap-3">
+              <input
+                className="input"
+                type="number"
+                placeholder="Frakt (kr, valfritt)"
+                aria-label="Fraktkostnad i kronor"
+                value={offerShippingCost}
+                onChange={(e) => setOfferShippingCost(e.target.value)}
+                min={0}
+              />
+              <input
+                className="input"
+                type="number"
+                placeholder="Leveranstid (dagar, valfritt)"
+                aria-label="Beräknad leveranstid i dagar"
+                value={offerDeliveryDays}
+                onChange={(e) => setOfferDeliveryDays(e.target.value)}
+                min={1}
+              />
+            </div>
             <textarea
               className="input"
               placeholder="Kort beskrivning"

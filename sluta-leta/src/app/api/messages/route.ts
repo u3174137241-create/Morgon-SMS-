@@ -18,6 +18,16 @@ async function assertParticipant(userId: string, transactionId: string) {
   if (!transaction.conversation) {
     return { error: jsonError("Chatten är låst tills köparen har godkänt erbjudandet och kontaktavgiften (om någon) är betald.", 403) };
   }
+  const otherPartyId = transaction.buyerId === userId ? transaction.sellerId : transaction.buyerId;
+  const block = await prisma.userBlock.findFirst({
+    where: {
+      OR: [
+        { blockerId: userId, blockedId: otherPartyId },
+        { blockerId: otherPartyId, blockedId: userId },
+      ],
+    },
+  });
+  if (block) return { error: jsonError("Den här konversationen är inte tillgänglig eftersom en av er har blockerat den andra.", 403) };
   return { transaction };
 }
 

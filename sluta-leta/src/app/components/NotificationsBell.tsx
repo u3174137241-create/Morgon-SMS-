@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { describeMatchReasons } from "@/lib/matching";
 
 type Notification = {
   id: string;
   type: string;
-  payload: { searchId?: string; transactionId?: string; title?: string; amount?: number };
+  payload: { searchId?: string; transactionId?: string; title?: string; amount?: number; reasons?: string[] };
   readAt: string | null;
   createdAt: string;
 };
@@ -18,7 +19,11 @@ const LABELS: Record<string, (n: Notification) => string> = {
   CONTACT_FEE_REQUIRED: (n) => `Betala kontaktavgift (${n.payload.amount ?? ""} kr) för att låsa upp chatten`,
   PAYMENT_COMPLETED: () => "Betalning genomförd",
   CHAT_UNLOCKED: () => "Chatten är upplåst",
-  NEW_MATCH: (n) => `Ny sökning matchar det du säljer: ${n.payload.title ?? ""}`,
+  NEW_MATCH: (n) => {
+    const reasons = Array.isArray(n.payload.reasons) ? describeMatchReasons(n.payload.reasons) : [];
+    const base = `Ny sökning matchar det du säljer: ${n.payload.title ?? ""}`;
+    return reasons.length > 0 ? `${base} (${reasons.join(", ")})` : base;
+  },
   TRANSACTION_UPDATED: () => "En affär har uppdaterats",
 };
 

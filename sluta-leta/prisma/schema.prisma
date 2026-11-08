@@ -168,24 +168,29 @@ model ListingImage {
 
 enum OfferStatus {
   SENT
+  VIEWED
   ACCEPTED
   DECLINED
+  WITHDRAWN
   EXPIRED
 }
 
 model Offer {
-  id          String      @id @default(cuid())
-  searchId    String?
-  search      Search?     @relation(fields: [searchId], references: [id], onDelete: SetNull)
-  listingId   String?
-  listing     Listing?    @relation(fields: [listingId], references: [id], onDelete: SetNull)
-  sellerId    String
-  seller      User        @relation("OffersBySeller", fields: [sellerId], references: [id], onDelete: Cascade)
-  price       Int
-  message     String
-  status      OfferStatus @default(SENT)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                    String      @id @default(cuid())
+  searchId              String?
+  search                Search?     @relation(fields: [searchId], references: [id], onDelete: SetNull)
+  listingId             String?
+  listing               Listing?    @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  sellerId              String
+  seller                User        @relation("OffersBySeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  price                 Int
+  shippingCost          Int?
+  estimatedDeliveryDays Int?
+  message               String
+  status                OfferStatus @default(SENT)
+  savedByBuyerAt        DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
 
   images      OfferImage[]
   transaction Transaction?

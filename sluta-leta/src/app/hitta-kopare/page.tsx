@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import ImageUploader from "@/app/components/ImageUploader";
+import { describeMatchReasons } from "@/lib/matching";
 
 type Match = {
   search: { id: string; title: string; description: string; budgetMax: number | null; location: string; user: { name: string } };
   score: number;
+  reasons: string[];
 };
 
 function matchLabel(score: number) {
@@ -55,7 +57,12 @@ export default function FindBuyersPage() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-kungsbla-700">Hitta köpare</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-kungsbla-700">Hitta köpare</h1>
+          <Link href="/mina-erbjudanden" className="text-xs font-medium text-kungsbla-600 hover:underline">
+            Mina erbjudanden →
+          </Link>
+        </div>
         <p className="text-sm text-gray-500">
           Beskriv vad du säljer så letar vi upp köpare i Sluta Leta som redan söker precis det.
         </p>
@@ -118,7 +125,7 @@ export default function FindBuyersPage() {
             </p>
           )}
           <div className="flex flex-col gap-3">
-            {matches.map(({ search, score }) => (
+            {matches.map(({ search, score, reasons }) => (
               <div key={search.id} className="card flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-kungsbla-700">{search.user.name} söker</p>
@@ -126,6 +133,9 @@ export default function FindBuyersPage() {
                   <p className="text-xs text-gray-400">
                     {search.location} · {matchLabel(score)}
                   </p>
+                  {reasons.length > 0 && (
+                    <p className="mt-1 text-xs text-guld-600">{describeMatchReasons(reasons).join(" · ")}</p>
+                  )}
                 </div>
                 <button
                   className="btn-primary !px-3 !py-1.5 text-xs whitespace-nowrap"

@@ -4,20 +4,43 @@ import { jsonError, jsonOk } from "@/lib/http";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const search = await prisma.search.findUnique({
-    where: { id },
-    include: {
-      images: { orderBy: { order: "asc" } },
-      user: { select: { id: true, name: true, avatarUrl: true, emailVerifiedAt: true } },
-      offers: {
-        include: {
-          images: true,
-          seller: { select: { id: true, name: true, avatarUrl: true, emailVerifiedAt: true, ratingSum: true, ratingCount: true, dealsCompleted: true } },
-        },
-        orderBy: { price: "asc" },
+  const user = await getCurrentUser();
+
+  const include = {
+    images: { orderBy: { order: "asc" as const } },
+    user: { select: { id: true, name: true, avatarUrl: true, emailVerifiedAt: true } },
+    offers: {
+      include: {
+        images: true,
+        seller: { select: { id: true, name: true, avatarUrl: true, emailVerifiedAt: true, ratingSum: true, ratingCount: true, dealsCompleted: true } },
       },
+      orderBy: { price: "asc" as const },
     },
-  });
+  };
+
+  let search = await prisma.search.findUnique({ where: { id }, include });
+  if (!search) return jsonError("Sökningen hittades inte.", 404);
+
+  let needsRefetch = false;
+  // Efterlysningen är utgången men har fortfarande öppna erbjudanden kvar — markera dem som utgångna.
+  if (search.expiresAt < new Date()) {
+    const { count } = await prisma.offer.updateMany({
+      where: { searchId: id, status: { in: ["SENT", "VIEWED"] } },
+      data: { status: "EXPIRED" },
+    });
+    needsRefetch = count > 0;
+  } else if (user && user.id === search.userId) {
+    // Köparen (sökningens ägare) tittar på sina erbjudanden — markera olästa som visade.
+    const { count } = await prisma.offer.updateMany({
+      where: { searchId: id, status: "SENT" },
+      data: { status: "VIEWED" },
+    });
+    needsRefetch = count > 0;
+  }
+
+  if (!needsRefetch) return jsonOk({ search });
+
+  search = await prisma.search.findUnique({ where: { id }, include });
   if (!search) return jsonError("Sökningen hittades inte.", 404);
   return jsonOk({ search });
 }

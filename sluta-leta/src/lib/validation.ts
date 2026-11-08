@@ -35,6 +35,8 @@ export const createOfferSchema = z.object({
   searchId: z.string().cuid().optional(),
   listingId: z.string().cuid().optional(),
   price: z.number().int().positive("Priset måste vara ett positivt tal.").max(100_000_000),
+  shippingCost: z.number().int().min(0, "Fraktkostnaden kan inte vara negativ.").max(100_000).optional(),
+  estimatedDeliveryDays: z.number().int().positive("Leveranstiden måste vara minst 1 dag.").max(365).optional(),
   message: z.string().trim().min(1, "Skriv en kort beskrivning.").max(1000, "Beskrivningen är för lång (max 1000 tecken)."),
   images: z.array(z.string().url()).max(10, "Max 10 bilder.").default([]),
 });
@@ -57,6 +59,10 @@ export const createReportSchema = z.object({
   targetType: z.enum(["USER", "SEARCH", "LISTING"]),
   targetId: z.string().cuid(),
   reason: z.string().trim().min(5, "Beskriv vad som hänt med minst 5 tecken.").max(500, "Texten är för lång (max 500 tecken)."),
+});
+
+export const blockUserSchema = z.object({
+  userId: z.string().cuid(),
 });
 
 export const pushSubscribeSchema = z.object({

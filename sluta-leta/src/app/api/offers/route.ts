@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = createOfferSchema.safeParse(body);
   if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Ogiltig indata.", 400);
-  const { searchId, listingId, price, message, images } = parsed.data;
+  const { searchId, listingId, price, shippingCost, estimatedDeliveryDays, message, images } = parsed.data;
 
   if (!searchId && !listingId) return jsonError("Erbjudandet måste kopplas till en sökning.", 400);
 
@@ -29,6 +29,16 @@ export async function POST(req: Request) {
       return jsonError("Sökningen är inte längre aktiv.", 400);
     }
     if (search.userId === user.id) return jsonError("Du kan inte lämna ett erbjudande på din egen sökning.", 400);
+
+    const block = await prisma.userBlock.findFirst({
+      where: {
+        OR: [
+          { blockerId: user.id, blockedId: search.userId },
+          { blockerId: search.userId, blockedId: user.id },
+        ],
+      },
+    });
+    if (block) return jsonError("Du kan inte lämna ett erbjudande till den här användaren.", 403);
   }
 
   const offer = await prisma.offer.create({
@@ -37,6 +47,8 @@ export async function POST(req: Request) {
       listingId,
       sellerId: user.id,
       price,
+      shippingCost,
+      estimatedDeliveryDays,
       message,
       images: { create: images.map((url, order) => ({ url, order })) },
     },

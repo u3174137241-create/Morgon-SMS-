@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
@@ -24,6 +24,8 @@ type Review = {
 };
 
 type ActiveSearch = { id: string; title: string; budgetMax: number | null; location: string; status: string };
+
+type BlockEntry = { id: string; blocked: { id: string; name: string; avatarUrl: string | null } };
 
 function ChevronIcon({ open }: { open: boolean }) {
   return (
@@ -90,6 +92,8 @@ export default function ProfilePage() {
   const [reporting, setReporting] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportState, setReportState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [blocks, setBlocks] = useState<BlockEntry[]>([]);
+  const [blockBusy, setBlockBusy] = useState(false);
 
   useEffect(() => {
     fetch(`/api/users/${id}`)
@@ -102,6 +106,32 @@ export default function ProfilePage() {
         setOfferCount(d.offerCount ?? 0);
       });
   }, [id]);
+
+  const loadBlocks = useCallback(() => {
+    fetch("/api/blocks")
+      .then((r) => r.json())
+      .then((d) => setBlocks(d.blocks ?? []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (user) loadBlocks();
+  }, [user, loadBlocks]);
+
+  async function toggleBlock(targetId: string, currentlyBlocked: boolean) {
+    setBlockBusy(true);
+    if (currentlyBlocked) {
+      await fetch(`/api/blocks?userId=${targetId}`, { method: "DELETE" });
+    } else {
+      await fetch("/api/blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: targetId }),
+      });
+    }
+    await loadBlocks();
+    setBlockBusy(false);
+  }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -165,12 +195,21 @@ export default function ProfilePage() {
       {!isSelf && user && (
         <div className="flex flex-col gap-2">
           {!reporting ? (
-            <button
-              className="w-fit text-xs font-medium text-gray-400 underline"
-              onClick={() => setReporting(true)}
-            >
-              Rapportera användare
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                className="w-fit text-xs font-medium text-gray-400 underline"
+                onClick={() => setReporting(true)}
+              >
+                Rapportera användare
+              </button>
+              <button
+                className="w-fit text-xs font-medium text-red-500 underline disabled:opacity-50"
+                disabled={blockBusy}
+                onClick={() => toggleBlock(profile.id, blocks.some((b) => b.blocked.id === profile.id))}
+              >
+                {blocks.some((b) => b.blocked.id === profile.id) ? "Avblockera" : "Blockera användare"}
+              </button>
+            </div>
           ) : reportState === "sent" ? (
             <p className="text-xs text-gray-500">Tack, vi har tagit emot din rapport.</p>
           ) : (
@@ -295,6 +334,29 @@ export default function ProfilePage() {
               <a href="/api/auth/export" className="btn-secondary w-fit !px-3 !py-1.5 text-xs">
                 Exportera mina uppgifter
               </a>
+              <div className="border-t border-gray-100 pt-3">
+                <p className="mb-2 text-xs font-medium text-gray-700">Blockerade användare</p>
+                {blocks.length === 0 ? (
+                  <p className="text-xs text-gray-400">Du har inte blockerat någon.</p>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    {blocks.map((b) => (
+                      <div key={b.id} className="flex items-center justify-between">
+                        <Link href={`/profil/${b.blocked.id}`} className="text-xs text-kungsbla-600 hover:underline">
+                          {b.blocked.name}
+                        </Link>
+                        <button
+                          className="text-xs text-gray-400 underline disabled:opacity-50"
+                          disabled={blockBusy}
+                          onClick={() => toggleBlock(b.blocked.id, true)}
+                        >
+                          Avblockera
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               {!confirmingDelete ? (
                 <button className="w-fit text-xs font-medium text-red-600 underline" onClick={() => setConfirmingDelete(true)}>
                   Radera mitt konto

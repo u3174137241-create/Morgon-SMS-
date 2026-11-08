@@ -50,5 +50,6 @@ export async function findMatchingSearchesForListing(listing: Listing, limit = 2
       user: search.user,
     },
     score: result.score,
+    reasons: result.reasons,
   }));
 }
