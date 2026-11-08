@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/http";
 import { sendMessageSchema } from "@/lib/validation";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rateLimit";
+import { sendPushToUser } from "@/lib/push";
 
 async function assertParticipant(userId: string, transactionId: string) {
   const transaction = await prisma.transaction.findUnique({
@@ -66,6 +67,21 @@ export async function POST(req: Request) {
       content,
       mediaUrl,
     },
+  });
+
+  const recipientId = transaction!.buyerId === user.id ? transaction!.sellerId : transaction!.buyerId;
+  await prisma.notification.create({
+    data: {
+      userId: recipientId,
+      type: "NEW_MESSAGE",
+      payload: { transactionId, messageId: message.id },
+    },
+  });
+  const preview = type === "TEXT" ? (content ?? "") : type === "IMAGE" ? "Skickade en bild" : "Skickade ett röstmeddelande";
+  await sendPushToUser(recipientId, {
+    title: `${user.name} skrev till dig`,
+    body: preview.length > 120 ? `${preview.slice(0, 117)}...` : preview,
+    url: `/meddelanden/${transactionId}`,
   });
 
   return jsonOk({ message }, 201);

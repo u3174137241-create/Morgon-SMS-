@@ -59,6 +59,18 @@ export const createReportSchema = z.object({
   reason: z.string().trim().min(5, "Beskriv vad som hänt med minst 5 tecken.").max(500, "Texten är för lång (max 500 tecken)."),
 });
 
+export const pushSubscribeSchema = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({
+    p256dh: z.string().min(1),
+    auth: z.string().min(1),
+  }),
+});
+
+export const pushUnsubscribeSchema = z.object({
+  endpoint: z.string().url(),
+});
+
 export const sendMessageSchema = z.object({
   transactionId: z.string().cuid(),
   type: z.enum(["TEXT", "IMAGE", "VOICE"]).default("TEXT"),

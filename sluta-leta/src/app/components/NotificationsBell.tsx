@@ -13,6 +13,7 @@ type Notification = {
 
 const LABELS: Record<string, (n: Notification) => string> = {
   NEW_OFFER: () => "Du har fått ett nytt erbjudande",
+  NEW_MESSAGE: () => "Du har fått ett nytt meddelande",
   OFFER_ACCEPTED: () => "Ditt erbjudande godkändes",
   CONTACT_FEE_REQUIRED: (n) => `Betala kontaktavgift (${n.payload.amount ?? ""} kr) för att låsa upp chatten`,
   PAYMENT_COMPLETED: () => "Betalning genomförd",

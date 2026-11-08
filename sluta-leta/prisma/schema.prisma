@@ -41,6 +41,7 @@ model User {
   blocksReceived        UserBlock[]              @relation("BlocksReceived")
   messages              Message[]
   auditLogs             AuditLog[]
+  pushSubscriptions     PushSubscription[]
 
   @@index([email])
 }
@@ -412,6 +413,7 @@ model Review {
 
 enum NotificationType {
   NEW_OFFER
+  NEW_MESSAGE
   OFFER_ACCEPTED
   CONTACT_FEE_REQUIRED
   PAYMENT_COMPLETED
@@ -491,6 +493,20 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
+}
+
+// --- Push notifications ---
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model AnalyticsEvent {

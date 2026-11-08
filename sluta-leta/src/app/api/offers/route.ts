@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/http";
 import { createOfferSchema } from "@/lib/validation";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rateLimit";
+import { sendPushToUser } from "@/lib/push";
 
 // POST /api/offers — "Lämna erbjudande". Görs av säljaren, mot en efterlysning
 // (Search) eller ett fynd hittat via Hitta köpare (listing/search-kombination).
@@ -50,6 +51,11 @@ export async function POST(req: Request) {
         type: "NEW_OFFER",
         payload: { offerId: offer.id, searchId, price },
       },
+    });
+    await sendPushToUser(search.userId, {
+      title: "Nytt bud!",
+      body: `${user.name} erbjöd ${price} kr på "${search.title}".`,
+      url: `/sok/${searchId}`,
     });
   }
 
