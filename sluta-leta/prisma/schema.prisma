@@ -42,6 +42,7 @@ model User {
   messages              Message[]
   auditLogs             AuditLog[]
   pushSubscriptions     PushSubscription[]
+  expoPushTokens        ExpoPushToken[]
 
   @@index([email])
 }
@@ -509,6 +510,18 @@ model PushSubscription {
   endpoint  String   @unique
   p256dh    String
   auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Pushtoken för den native iOS/Android-appen (Expo Push). Separat spår från
+// PushSubscription (webbpush), som bara gäller för webbläsare.
+model ExpoPushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
   createdAt DateTime @default(now())
 
   @@index([userId])

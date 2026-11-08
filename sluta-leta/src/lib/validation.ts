@@ -77,6 +77,10 @@ export const pushUnsubscribeSchema = z.object({
   endpoint: z.string().url(),
 });
 
+export const expoPushTokenSchema = z.object({
+  token: z.string().min(1, "Token saknas."),
+});
+
 export const sendMessageSchema = z.object({
   transactionId: z.string().cuid(),
   type: z.enum(["TEXT", "IMAGE", "VOICE"]).default("TEXT"),

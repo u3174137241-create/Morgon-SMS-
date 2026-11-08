@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import NavBar from "./components/NavBar";
 import PushNotificationGate from "./components/PushNotificationGate";
+import NativeAppBridge from "./components/NativeAppBridge";
 import { CurrentUserProvider } from "@/lib/useCurrentUser";
 
 const APP_URL = process.env.APP_BASE_URL ?? "https://sluta-leta.vercel.app";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CurrentUserProvider>
           <NavBar />
           <PushNotificationGate />
+          <NativeAppBridge />
           <main className="mx-auto max-w-5xl px-4 pb-24 pt-6 sm:pb-16">{children}</main>
           <footer className="hidden border-t border-gray-100 py-6 text-center text-xs text-gray-400 sm:block">
             <Link href="/villkor" className="underline">
