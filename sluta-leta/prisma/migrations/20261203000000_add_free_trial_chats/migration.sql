@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ContactFeeStatus" ADD VALUE IF NOT EXISTS 'WAIVED_TRIAL';

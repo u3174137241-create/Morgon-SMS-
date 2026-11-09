@@ -179,7 +179,8 @@ function TransactionThreadContent() {
                 {payingUp ? "Skapar betalning…" : `Lås upp chatten — ${transaction.contactFee.amount} kr`}
               </button>
               <p className="text-xs text-gray-400">
-                Har du Sluta Leta Plus slipper du den här avgiften helt.{" "}
+                Dina gratis provchattar som ny användare är använda. Har du Sluta Leta Plus slipper du den här
+                avgiften helt.{" "}
                 <a href="/plus" className="font-medium text-kungsbla-600 underline">
                   Läs mer om Plus
                 </a>

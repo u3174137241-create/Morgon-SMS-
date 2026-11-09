@@ -9,3 +9,8 @@ export function calculateContactFee(_offerPriceSek: number): number {
 }
 
 export const PLUS_MONTHLY_PRICE_SEK = 49;
+
+// Alla nya användare får sina första FREE_TRIAL_CHAT_LIMIT upplåsta chattar
+// (som säljare) gratis, oavsett Plus. Därefter gäller kontaktavgiften som
+// vanligt, om de inte har en aktiv Plus-prenumeration.
+export const FREE_TRIAL_CHAT_LIMIT = 5;

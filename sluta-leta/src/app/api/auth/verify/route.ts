@@ -1,11 +1,15 @@
 import { prisma } from "@/lib/db";
 import { hashToken } from "@/lib/tokens";
 import { jsonError, jsonOk } from "@/lib/http";
+import { rateLimit, clientKeyFromRequest } from "@/lib/rateLimit";
 import { z } from "zod";
 
 const schema = z.object({ token: z.string().min(10) });
 
 export async function POST(req: Request) {
+  const { allowed } = rateLimit(clientKeyFromRequest(req, "verify"), 20, 15 * 60 * 1000);
+  if (!allowed) return jsonError("För många försök. Försök igen senare.", 429);
+
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) return jsonError("Ogiltig token.", 400);

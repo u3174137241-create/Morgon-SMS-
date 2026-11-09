@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/http";
 import { calculateContactFee } from "@/lib/fees";
-import { isPlusActive } from "@/lib/plus";
+import { isPlusActive, getFreeTrialChatsRemaining } from "@/lib/plus";
 import { transitionTransaction } from "@/lib/transactions";
 
 // "Ge åtkomst" — köparen godkänner ett erbjudande. Backend avgör alltid om
@@ -25,6 +25,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (offer.sellerId === user.id) return jsonError("Du kan inte godkänna ditt eget erbjudande.", 400);
 
   const sellerHasPlus = await isPlusActive(offer.sellerId);
+  const freeTrialRemaining = sellerHasPlus ? 0 : await getFreeTrialChatsRemaining(offer.sellerId);
+  const sellerOnFreeTrial = !sellerHasPlus && freeTrialRemaining > 0;
   const feeAmount = calculateContactFee(offer.price);
 
   const result = await prisma.$transaction(async (tx) => {
@@ -36,19 +38,24 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         buyerId: user.id,
         sellerId: offer.sellerId,
         amount: offer.price,
-        contactFeeWaived: sellerHasPlus,
+        contactFeeWaived: sellerHasPlus || sellerOnFreeTrial,
       },
     });
 
-    if (sellerHasPlus) {
+    if (sellerHasPlus || sellerOnFreeTrial) {
       await tx.contactFee.create({
         data: {
           transactionId: transaction.id,
           amount: feeAmount,
-          status: "WAIVED_PLUS",
+          status: sellerHasPlus ? "WAIVED_PLUS" : "WAIVED_TRIAL",
         },
       });
-      await transitionTransaction(tx, transaction.id, "CHAT_UNLOCKED", "Plus-medlem — avgift avskriven");
+      await transitionTransaction(
+        tx,
+        transaction.id,
+        "CHAT_UNLOCKED",
+        sellerHasPlus ? "Plus-medlem — avgift avskriven" : "Gratis provchatt — avgift avskriven"
+      );
       await tx.conversation.create({ data: { transactionId: transaction.id } });
       await tx.notification.create({
         data: {

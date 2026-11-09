@@ -270,6 +270,7 @@ enum ContactFeeStatus {
   PENDING
   PAID
   WAIVED_PLUS
+  WAIVED_TRIAL
   FAILED
   REFUNDED
 }

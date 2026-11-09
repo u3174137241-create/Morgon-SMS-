@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { PLUS_MONTHLY_PRICE_SEK } from "@/lib/fees";
+import { PLUS_MONTHLY_PRICE_SEK, CONTACT_FEE_SEK } from "@/lib/fees";
 
 type Subscription = {
   status: string;
@@ -16,6 +16,8 @@ function PlusPageContent() {
   const checkoutStatus = searchParams.get("status");
   const [subscription, setSubscription] = useState<Subscription>(null);
   const [stripeConfigured, setStripeConfigured] = useState(true);
+  const [freeTrialChatsRemaining, setFreeTrialChatsRemaining] = useState<number | null>(null);
+  const [freeTrialChatsLimit, setFreeTrialChatsLimit] = useState(5);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [needsLogin, setNeedsLogin] = useState(false);
@@ -38,6 +40,8 @@ function PlusPageContent() {
       .then((d) => {
         setSubscription(d.subscription);
         setStripeConfigured(d.stripeConfigured);
+        setFreeTrialChatsRemaining(d.freeTrialChatsRemaining ?? null);
+        setFreeTrialChatsLimit(d.freeTrialChatsLimit ?? 5);
       })
       .catch((err) => {
         if (err.message !== "not-logged-in") setLoadError(true);
@@ -93,6 +97,10 @@ function PlusPageContent() {
         <p>✓ Full tillgång till Hitta köpare</p>
         <p>✓ Inget tak på hur många affärer du gör</p>
       </div>
+      <p className="text-xs text-gray-400">
+        Nya användare får sina första {freeTrialChatsLimit} chattar gratis även utan Plus. Därefter kostar en
+        upplåst chatt {CONTACT_FEE_SEK} kr, om du inte har Plus.
+      </p>
 
       {checkoutStatus === "klar" && (
         <p className="rounded-xl bg-kungsbla-50 p-3 text-sm text-kungsbla-600">
@@ -136,9 +144,18 @@ function PlusPageContent() {
           </button>
         </div>
       ) : (
-        <button className="btn-primary self-center disabled:opacity-50" onClick={subscribe} disabled={submitting}>
-          {submitting ? "Öppnar betalning…" : `Bli Plus-medlem — ${PLUS_MONTHLY_PRICE_SEK} kr/mån`}
-        </button>
+        <div className="flex flex-col gap-2">
+          {freeTrialChatsRemaining !== null && (
+            <p className="text-sm text-gray-500">
+              {freeTrialChatsRemaining > 0
+                ? `Du har ${freeTrialChatsRemaining} av ${freeTrialChatsLimit} gratis provchattar kvar som ny användare.`
+                : `Du har använt alla dina ${freeTrialChatsLimit} gratis provchattar — nya affärer kostar ${CONTACT_FEE_SEK} kr att låsa upp, om du inte har Plus.`}
+            </p>
+          )}
+          <button className="btn-primary self-center disabled:opacity-50" onClick={subscribe} disabled={submitting}>
+            {submitting ? "Öppnar betalning…" : `Bli Plus-medlem — ${PLUS_MONTHLY_PRICE_SEK} kr/mån`}
+          </button>
+        </div>
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
