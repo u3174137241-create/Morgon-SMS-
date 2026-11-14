@@ -1,12 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, BackHandler, Linking, Platform, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
-import { WebView } from "react-native-webview";
+import { WebView, type WebViewNavigation } from "react-native-webview";
 
 const APP_URL = "https://sluta-leta-three.vercel.app";
+
+// Stripes betalsidor ska aldrig laddas inuti app-webviewen — dels funkar inte
+// Stripes popup-baserade kortvalidering bra där, dels (viktigast) vill Apple
+// se att digitala köp som låser upp funktioner i appen inte går via en
+// betaltjänst inbäddad i appens egen vy (App Store-regel 3.1.1). Genom att
+// öppna Stripe i telefonens vanliga webbläsare istället hålls själva
+// köpet utanför appens UI.
+const EXTERNAL_PAYMENT_HOSTS = ["buy.stripe.com", "checkout.stripe.com"];
+
+function isExternalPaymentUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return EXTERNAL_PAYMENT_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -65,6 +82,14 @@ export default function App() {
     });
   }, []);
 
+  const handleShouldStartLoadWithRequest = useCallback((request: WebViewNavigation) => {
+    if (isExternalPaymentUrl(request.url)) {
+      Linking.openURL(request.url).catch(() => {});
+      return false;
+    }
+    return true;
+  }, []);
+
   useEffect(() => {
     if (Platform.OS !== "android") return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -85,6 +110,7 @@ export default function App() {
         source={{ uri: APP_URL }}
         style={styles.webview}
         onNavigationStateChange={(nav: { canGoBack: boolean }) => setCanGoBack(nav.canGoBack)}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onLoadEnd={() => {
           setLoading(false);
           if (pushTokenRef.current) sendTokenToWebView(pushTokenRef.current);
