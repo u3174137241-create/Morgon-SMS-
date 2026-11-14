@@ -22,7 +22,13 @@ export async function POST(req: Request) {
   const passwordHash = await hashPassword(parsed.data.password);
   await prisma.$transaction([
     prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
-    prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+    // sessionVersion höjs samtidigt — loggar ut alla aktiva sessioner (t.ex.
+    // en stulen inloggningskaka), vilket är hela poängen med att återställa
+    // lösenordet om kontot kan ha blivit kapat.
+    prisma.user.update({
+      where: { id: record.userId },
+      data: { passwordHash, sessionVersion: { increment: 1 } },
+    }),
   ]);
 
   return jsonOk({ ok: true });

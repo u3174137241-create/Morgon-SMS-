@@ -1,12 +1,16 @@
 import { prisma } from "@/lib/db";
-import { getSessionUserId } from "@/lib/session";
+import { getSession } from "@/lib/session";
 import type { User } from "@prisma/client";
 
 export async function getCurrentUser(): Promise<User | null> {
-  const userId = await getSessionUserId();
-  if (!userId) return null;
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const session = await getSession();
+  if (!session) return null;
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
   if (!user || user.status !== "ACTIVE") return null;
+  // sessionVersion höjs vid lösenordsåterställning — en token som signerades
+  // innan dess (t.ex. en stulen cookie) ska sluta fungera direkt, inte bara
+  // när den löper ut om 30 dagar.
+  if (user.sessionVersion !== session.sessionVersion) return null;
   return user;
 }
 

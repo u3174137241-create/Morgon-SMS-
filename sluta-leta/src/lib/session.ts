@@ -16,20 +16,22 @@ function sign(payload: string): string {
   return crypto.createHmac("sha256", getSecret()).update(payload).digest("base64url");
 }
 
-export function createSessionToken(userId: string): string {
+export function createSessionToken(userId: string, sessionVersion: number): string {
   const expires = Date.now() + SESSION_TTL_MS;
-  const payload = `${userId}.${expires}`;
+  const payload = `${userId}.${sessionVersion}.${expires}`;
   const sig = sign(payload);
   return `${payload}.${sig}`;
 }
 
-export function verifySessionToken(token: string | undefined | null): { userId: string } | null {
+export function verifySessionToken(
+  token: string | undefined | null
+): { userId: string; sessionVersion: number } | null {
   if (!token) return null;
   const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  const [userId, expiresStr, sig] = parts;
-  if (!userId || !expiresStr || !sig) return null;
-  const payload = `${userId}.${expiresStr}`;
+  if (parts.length !== 4) return null;
+  const [userId, sessionVersionStr, expiresStr, sig] = parts;
+  if (!userId || !sessionVersionStr || !expiresStr || !sig) return null;
+  const payload = `${userId}.${sessionVersionStr}.${expiresStr}`;
   const expectedSig = sign(payload);
   const sigBuf = Buffer.from(sig);
   const expectedBuf = Buffer.from(expectedSig);
@@ -37,13 +39,15 @@ export function verifySessionToken(token: string | undefined | null): { userId: 
     return null;
   }
   const expires = Number(expiresStr);
+  const sessionVersion = Number(sessionVersionStr);
   if (!Number.isFinite(expires) || Date.now() > expires) return null;
-  return { userId };
+  if (!Number.isFinite(sessionVersion)) return null;
+  return { userId, sessionVersion };
 }
 
-export async function setSessionCookie(userId: string) {
+export async function setSessionCookie(userId: string, sessionVersion: number) {
   const store = await cookies();
-  store.set(SESSION_COOKIE, createSessionToken(userId), {
+  store.set(SESSION_COOKIE, createSessionToken(userId, sessionVersion), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -57,11 +61,10 @@ export async function clearSessionCookie() {
   store.delete(SESSION_COOKIE);
 }
 
-export async function getSessionUserId(): Promise<string | null> {
+export async function getSession(): Promise<{ userId: string; sessionVersion: number } | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
-  const session = verifySessionToken(token);
-  return session?.userId ?? null;
+  return verifySessionToken(token);
 }
 
 export { SESSION_COOKIE };
