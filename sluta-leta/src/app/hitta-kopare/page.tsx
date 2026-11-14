@@ -27,6 +27,9 @@ export default function FindBuyersPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [offerState, setOfferState] = useState<Record<string, "idle" | "sending" | "sent" | "error">>({});
+  const [activeOfferId, setActiveOfferId] = useState<string | null>(null);
+  const [offerPriceInput, setOfferPriceInput] = useState("");
+  const [offerMessageInput, setOfferMessageInput] = useState("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,14 +47,22 @@ export default function FindBuyersPage() {
     setMatches(data.matches);
   }
 
-  async function sendOffer(searchId: string) {
+  function openOfferForm(searchId: string) {
+    setActiveOfferId(searchId);
+    setOfferPriceInput(price);
+    setOfferMessageInput(description);
+  }
+
+  async function sendOffer(e: React.FormEvent, searchId: string) {
+    e.preventDefault();
     setOfferState((s) => ({ ...s, [searchId]: "sending" }));
     const res = await fetch("/api/offers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ searchId, price: Number(price), message: description, images }),
+      body: JSON.stringify({ searchId, price: Number(offerPriceInput), message: offerMessageInput, images }),
     });
     setOfferState((s) => ({ ...s, [searchId]: res.ok ? "sent" : "error" }));
+    if (res.ok) setActiveOfferId(null);
   }
 
   return (
@@ -126,24 +137,69 @@ export default function FindBuyersPage() {
           )}
           <div className="flex flex-col gap-3">
             {matches.map(({ search, score, reasons }) => (
-              <div key={search.id} className="card flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-kungsbla-700">{search.user.name} söker</p>
-                  <p className="text-sm text-gray-600">{search.description}</p>
-                  <p className="text-xs text-gray-400">
-                    {search.location} · {matchLabel(score)}
-                  </p>
-                  {reasons.length > 0 && (
-                    <p className="mt-1 text-xs text-guld-600">{describeMatchReasons(reasons).join(" · ")}</p>
+              <div key={search.id} className="card flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-kungsbla-700">{search.user.name} söker</p>
+                    <p className="text-sm text-gray-600">{search.description}</p>
+                    <p className="text-xs text-gray-400">
+                      {search.location} · {matchLabel(score)}
+                    </p>
+                    {reasons.length > 0 && (
+                      <p className="mt-1 text-xs text-guld-600">{describeMatchReasons(reasons).join(" · ")}</p>
+                    )}
+                  </div>
+                  {activeOfferId !== search.id && (
+                    <button
+                      className="btn-primary !px-3 !py-1.5 text-xs whitespace-nowrap"
+                      disabled={offerState[search.id] === "sent"}
+                      onClick={() => openOfferForm(search.id)}
+                    >
+                      {offerState[search.id] === "sent" ? "Skickat!" : "Lämna erbjudande"}
+                    </button>
                   )}
                 </div>
-                <button
-                  className="btn-primary !px-3 !py-1.5 text-xs whitespace-nowrap"
-                  disabled={offerState[search.id] === "sending" || offerState[search.id] === "sent"}
-                  onClick={() => sendOffer(search.id)}
-                >
-                  {offerState[search.id] === "sent" ? "Skickat!" : offerState[search.id] === "sending" ? "Skickar…" : "Lämna erbjudande"}
-                </button>
+                {activeOfferId === search.id && (
+                  <form onSubmit={(e) => sendOffer(e, search.id)} className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="Ditt pris till just den här köparen (kr)"
+                      aria-label="Ditt pris i kronor"
+                      value={offerPriceInput}
+                      onChange={(e) => setOfferPriceInput(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                    <textarea
+                      className="input"
+                      placeholder="Meddelande till köparen"
+                      aria-label="Meddelande till köparen"
+                      value={offerMessageInput}
+                      onChange={(e) => setOfferMessageInput(e.target.value)}
+                      required
+                    />
+                    {offerState[search.id] === "error" && (
+                      <p className="text-xs text-red-600">Kunde inte skicka erbjudandet. Försök igen.</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        className="btn-primary !px-3 !py-1.5 text-xs"
+                        type="submit"
+                        disabled={offerState[search.id] === "sending"}
+                      >
+                        {offerState[search.id] === "sending" ? "Skickar…" : "Skicka erbjudande"}
+                      </button>
+                      <button
+                        className="btn-secondary !px-3 !py-1.5 text-xs"
+                        type="button"
+                        onClick={() => setActiveOfferId(null)}
+                      >
+                        Avbryt
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             ))}
           </div>
