@@ -6,7 +6,7 @@ import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { WebView } from "react-native-webview";
 
-const APP_URL = "https://sluta-leta.vercel.app";
+const APP_URL = "https://sluta-leta-three.vercel.app";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
