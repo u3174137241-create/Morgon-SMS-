@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/http";
-import { isStripeConfigured, createContactFeeCheckoutSession, getOrCreateStripeCustomerId } from "@/lib/stripe";
+import { isStripeConfigured, getContactFeeCheckoutUrl } from "@/lib/stripe";
 import { transitionTransaction } from "@/lib/transactions";
 import { z } from "zod";
 
@@ -37,30 +37,21 @@ export async function POST(req: Request) {
   }
 
   try {
-    const customerId = await getOrCreateStripeCustomerId(user);
-    const session = await createContactFeeCheckoutSession({
+    const checkoutUrl = getContactFeeCheckoutUrl({
       transactionId: transaction.id,
       contactFeeId: transaction.contactFee.id,
-      amountSek: transaction.contactFee.amount,
-      sellerId: user.id,
-      sellerEmail: user.email,
-      sellerStripeCustomerId: customerId,
     });
 
-    await prisma.contactFee.update({
-      where: { id: transaction.contactFee.id },
-      data: { stripeCheckoutSessionId: session.id, status: "PENDING" },
-    });
     // Ett tidigare misslyckat försök måste först tillbaka till CONTACT_FEE_PENDING
     // innan det nya försöket kan gå vidare till PAYMENT_PROCESSING.
     if (transaction.state === "FAILED") {
       await transitionTransaction(prisma, transaction.id, "CONTACT_FEE_PENDING", "Nytt betalningsförsök");
     }
-    await transitionTransaction(prisma, transaction.id, "PAYMENT_PROCESSING", "Stripe checkout skapad");
+    await transitionTransaction(prisma, transaction.id, "PAYMENT_PROCESSING", "Stripe-betalningslänk skickad");
 
-    return jsonOk({ checkoutUrl: session.url });
+    return jsonOk({ checkoutUrl });
   } catch (err) {
-    console.error("[contact-fee/checkout] Stripe-anrop misslyckades", err);
+    console.error("[contact-fee/checkout] kunde inte bygga betalningslänk", err);
     return jsonError("Kunde inte starta betalningen just nu. Försök igen om en liten stund.", 502);
   }
 }
