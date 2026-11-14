@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/lib/useCurrentUser";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refresh } = useCurrentUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,8 +25,13 @@ export default function LoginPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.error ?? "Något gick fel.");
+    // router.refresh() uppdaterar bara serverkomponenter — CurrentUserProvider
+    // sitter högre upp i trädet och monteras inte om vid navigering, så utan
+    // denna explicita refresh() fortsätter NavBar och resten av sidan visa
+    // "utloggad" tills man laddar om sidan helt, trots att inloggningskakan
+    // redan är satt korrekt.
+    await refresh();
     router.push("/");
-    router.refresh();
   }
 
   return (
