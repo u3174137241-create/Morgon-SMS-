@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { generateRawToken, hashToken } from "@/lib/tokens";
@@ -19,9 +20,20 @@ export async function POST(req: Request) {
   if (existing) return jsonError("Det finns redan ett konto med den e-postadressen.", 409);
 
   const passwordHash = await hashPassword(password);
-  const user = await prisma.user.create({
-    data: { email, passwordHash, name },
-  });
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: { email, passwordHash, name },
+    });
+  } catch (err) {
+    // Två samtidiga registreringar med samma e-post slår i den unika
+    // begränsningen efter att den tidiga koll ovan redan passerat — svara
+    // med samma tydliga 409 istället för ett 500-fel.
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return jsonError("Det finns redan ett konto med den e-postadressen.", 409);
+    }
+    throw err;
+  }
 
   const rawToken = generateRawToken();
   await prisma.emailVerificationToken.create({

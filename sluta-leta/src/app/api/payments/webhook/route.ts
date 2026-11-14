@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { constructWebhookEvent } from "@/lib/stripe";
 import { transitionTransaction } from "@/lib/transactions";
+import { sendPushToUser } from "@/lib/push";
 import type Stripe from "stripe";
 
 // Vi kör utan Stripe-SDK:t (ingen riktig API-nyckel behövs, se lib/stripe.ts),
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
 
     await prisma.payment.create({
       data: {
-        userId: extractUserId(event) ?? "unknown",
+        userId: (await extractUserId(event)) ?? "unknown",
         type: event.type.startsWith("customer.subscription") || event.type === "invoice.payment_failed" ? "SUBSCRIPTION" : "CONTACT_FEE",
         stripeObjectId: event.id,
         amount: extractAmount(event),
@@ -92,9 +93,9 @@ export async function POST(req: Request) {
 async function handleContactFeePaid(session: Stripe.Checkout.Session, ref: ContactFeeRef) {
   const { transactionId, contactFeeId } = ref;
 
-  await prisma.$transaction(async (tx) => {
+  const unlocked = await prisma.$transaction(async (tx) => {
     const fee = await tx.contactFee.findUnique({ where: { id: contactFeeId } });
-    if (!fee || fee.status === "PAID") return;
+    if (!fee || fee.status === "PAID") return null;
 
     await tx.contactFee.update({
       where: { id: contactFeeId },
@@ -121,7 +122,14 @@ async function handleContactFeePaid(session: Stripe.Checkout.Session, ref: Conta
         { userId: transaction.sellerId, type: "CHAT_UNLOCKED", payload: { transactionId } },
       ],
     });
+
+    return transaction;
   });
+
+  if (unlocked) {
+    const payload = { title: "Chatten är upplåst!", body: "Betalningen gick igenom — chatten är öppen nu.", url: `/meddelanden/${transactionId}` };
+    await Promise.all([sendPushToUser(unlocked.buyerId, payload), sendPushToUser(unlocked.sellerId, payload)]);
+  }
 }
 
 async function handleContactFeeExpiredOrFailed(ref: ContactFeeRef) {
@@ -151,7 +159,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   const fee = await prisma.contactFee.findUnique({ where: { stripePaymentIntentId: paymentIntentId } });
   if (!fee || fee.status !== "PAID") return;
 
-  await prisma.$transaction(async (tx) => {
+  const refunded = await prisma.$transaction(async (tx) => {
     await tx.contactFee.update({ where: { id: fee.id }, data: { status: "REFUNDED" } });
     await tx.refund.upsert({
       where: { contactFeeId: fee.id },
@@ -160,7 +168,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     });
 
     const transaction = await tx.transaction.findUnique({ where: { id: fee.transactionId } });
-    if (!transaction || transaction.state === "REFUNDED") return;
+    if (!transaction || transaction.state === "REFUNDED") return null;
     if (transaction.state !== "REFUND_PENDING") {
       await transitionTransaction(tx, transaction.id, "REFUND_PENDING", "Återbetalning registrerad från Stripe");
     }
@@ -172,7 +180,14 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
         { userId: transaction.sellerId, type: "TRANSACTION_UPDATED", payload: { transactionId: transaction.id, reason: "refunded" } },
       ],
     });
+
+    return transaction;
   });
+
+  if (refunded) {
+    const payload = { title: "Kontaktavgift återbetald", body: "En betalning har återbetalats av Sluta Leta.", url: `/meddelanden/${refunded.id}` };
+    await Promise.all([sendPushToUser(refunded.buyerId, payload), sendPushToUser(refunded.sellerId, payload)]);
+  }
 }
 
 // Period/status sätts preliminärt här utifrån checkout-sessionen direkt —
@@ -270,11 +285,21 @@ function parseClientReferenceId(value: string | null | undefined): ContactFeeRef
   return null;
 }
 
-function extractUserId(event: Stripe.Event): string | null {
+async function extractUserId(event: Stripe.Event): Promise<string | null> {
   if (event.type === "checkout.session.completed" || event.type === "checkout.session.expired") {
     const session = event.data.object as Stripe.Checkout.Session;
     const ref = parseClientReferenceId(session.client_reference_id);
     if (ref?.kind === "plus_subscription") return ref.userId;
+    if (ref?.kind === "contact_fee") {
+      // Payment Links kan inte sätta per-köp metadata, så vi slår upp säljaren
+      // (den som faktiskt betalar kontaktavgiften) via transaktionen, för att
+      // Payment-raden ska gå att spåra i admin-rapporter — annars "unknown".
+      const transaction = await prisma.transaction.findUnique({
+        where: { id: ref.transactionId },
+        select: { sellerId: true },
+      });
+      return transaction?.sellerId ?? null;
+    }
     return null;
   }
   return null;

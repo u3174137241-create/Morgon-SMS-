@@ -5,6 +5,7 @@ import { jsonError, jsonOk } from "@/lib/http";
 import { calculateContactFee } from "@/lib/fees";
 import { isPlusActive, getFreeTrialChatsRemaining } from "@/lib/plus";
 import { transitionTransaction } from "@/lib/transactions";
+import { sendPushToUser } from "@/lib/push";
 
 // "Ge åtkomst" — köparen godkänner ett erbjudande. Backend avgör alltid om
 // säljaren har Plus (avgiftsfritt) eller måste betala kontaktavgift — aldrig frontend.
@@ -114,6 +115,21 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
     );
+  }
+
+  const searchTitle = offer.search.title;
+  if (result.state === "CHAT_UNLOCKED") {
+    await sendPushToUser(sellerId, {
+      title: "Chatten är upplåst!",
+      body: `Ditt bud på "${searchTitle}" är godkänt och chatten är öppen direkt — ${sellerHasPlus ? "du har Plus" : "gratis provchatt"}.`,
+      url: `/meddelanden/${result.id}`,
+    });
+  } else {
+    await sendPushToUser(sellerId, {
+      title: "Ditt bud blev godkänt!",
+      body: `Betala kontaktavgiften (${feeAmount} kr) för att låsa upp chatten om "${searchTitle}".`,
+      url: `/meddelanden/${result.id}`,
+    });
   }
 
   return jsonOk({ transaction: result });

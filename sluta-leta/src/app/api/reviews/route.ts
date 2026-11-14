@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/http";
@@ -30,16 +31,26 @@ export async function POST(req: Request) {
   });
   if (existing) return jsonError("Du har redan recenserat den här affären.", 409);
 
-  const review = await prisma.$transaction(async (tx) => {
-    const created = await tx.review.create({
-      data: { transactionId, authorId: user.id, targetId, rating, comment },
+  try {
+    const review = await prisma.$transaction(async (tx) => {
+      const created = await tx.review.create({
+        data: { transactionId, authorId: user.id, targetId, rating, comment },
+      });
+      await tx.user.update({
+        where: { id: targetId },
+        data: { ratingSum: { increment: rating }, ratingCount: { increment: 1 } },
+      });
+      return created;
     });
-    await tx.user.update({
-      where: { id: targetId },
-      data: { ratingSum: { increment: rating }, ratingCount: { increment: 1 } },
-    });
-    return created;
-  });
 
-  return jsonOk({ review }, 201);
+    return jsonOk({ review }, 201);
+  } catch (err) {
+    // Två samtidiga inskick för samma affär och författare slår i den unika
+    // begränsningen (transactionId_authorId) — svara med samma tydliga 409
+    // som när vi hittar dubbletten själva ovan, istället för ett 500-fel.
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return jsonError("Du har redan recenserat den här affären.", 409);
+    }
+    throw err;
+  }
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { scoreMatch, type MatchRequirements, type MatchCandidate } from "@/lib/matching";
+import { sendPushToUser } from "@/lib/push";
 import type { Search } from "@prisma/client";
 
 const MATCH_NOTIFY_THRESHOLD = 0.55;
@@ -54,6 +55,16 @@ export async function notifyMatchingSellersForSearch(search: Search): Promise<nu
       payload: { searchId: search.id, listingId: listing.id, title: search.title, reasons: result.reasons },
     })),
   });
+
+  await Promise.all(
+    matchedListings.map(({ listing }) =>
+      sendPushToUser(listing.userId, {
+        title: "Ny match hittad!",
+        body: `En köpare söker något som matchar "${listing.title}".`,
+        url: `/sok/${search.id}`,
+      })
+    )
+  );
 
   return matchedListings.length;
 }

@@ -14,6 +14,14 @@ export default function NativeAppBridge() {
     if (!user) return;
 
     function handleMessage(event: MessageEvent | Event) {
+      // react-native-webview injicerar meddelandet med tomt ursprung (ingen
+      // riktig cross-document postMessage-resa). Ett äkta cross-origin-fönster
+      // (t.ex. en attacker-sida som öppnat oss via window.open och postar in
+      // ett falskt expo-push-token för att kapa pushnotiser till inloggad
+      // användare) har alltid ett annat, icke-tomt ursprung — avvisa det.
+      const origin = (event as MessageEvent).origin;
+      if (origin && origin !== window.location.origin) return;
+
       const data = (event as MessageEvent).data;
       if (typeof data !== "string") return;
       let parsed: { type?: string; token?: string } | null = null;

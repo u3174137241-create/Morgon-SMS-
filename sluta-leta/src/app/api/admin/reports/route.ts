@@ -27,6 +27,9 @@ export async function PATCH(req: Request) {
     return jsonError("Ogiltig indata.", 400);
   }
 
+  const existing = await prisma.report.findUnique({ where: { id } });
+  if (!existing) return jsonError("Rapporten hittades inte.", 404);
+
   const report = await prisma.report.update({ where: { id }, data: { status } });
   return jsonOk({ report });
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
 import NavBar from "./components/NavBar";
@@ -6,7 +6,13 @@ import PushNotificationGate from "./components/PushNotificationGate";
 import NativeAppBridge from "./components/NativeAppBridge";
 import { CurrentUserProvider } from "@/lib/useCurrentUser";
 
-const APP_URL = process.env.APP_BASE_URL ?? "https://sluta-leta.vercel.app";
+const APP_URL = process.env.APP_BASE_URL ?? "https://sluta-leta-three.vercel.app";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#2563eb",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
