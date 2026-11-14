@@ -7,19 +7,20 @@ import Constants from "expo-constants";
 import { WebView, type WebViewNavigation } from "react-native-webview";
 
 const APP_URL = "https://sluta-leta-three.vercel.app";
+const APP_HOSTNAME = new URL(APP_URL).hostname;
 
-// Stripes betalsidor ska aldrig laddas inuti app-webviewen — dels funkar inte
-// Stripes popup-baserade kortvalidering bra där, dels (viktigast) vill Apple
-// se att digitala köp som låser upp funktioner i appen inte går via en
-// betaltjänst inbäddad i appens egen vy (App Store-regel 3.1.1). Genom att
-// öppna Stripe i telefonens vanliga webbläsare istället hålls själva
-// köpet utanför appens UI.
-const EXTERNAL_PAYMENT_HOSTS = ["buy.stripe.com", "checkout.stripe.com"];
-
-function isExternalPaymentUrl(url: string): boolean {
+// WebViewen delar appens inloggningskaka (sharedCookiesEnabled), vilket gör
+// den till ett "betrott" skal i användarens ögon. Utan den här spärren skulle
+// en länk som en annan användare klistrar in i en chatt (phishing, en falsk
+// inloggningssida osv.) öppnas rakt inuti appen med samma UI-chrome som
+// resten av Sluta Leta — ett klassiskt sätt att lura folk. Allt som inte är
+// vår egen domän öppnas därför i telefonens vanliga webbläsare istället,
+// vilket även täcker Stripes betalsidor (buy.stripe.com) och samtidigt
+// håller köpet utanför appens egen vy (App Store-regel 3.1.1).
+function shouldOpenInApp(url: string): boolean {
   try {
-    const { hostname } = new URL(url);
-    return EXTERNAL_PAYMENT_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+    const { hostname, protocol } = new URL(url);
+    return protocol === "https:" && hostname === APP_HOSTNAME;
   } catch {
     return false;
   }
@@ -83,11 +84,9 @@ export default function App() {
   }, []);
 
   const handleShouldStartLoadWithRequest = useCallback((request: WebViewNavigation) => {
-    if (isExternalPaymentUrl(request.url)) {
-      Linking.openURL(request.url).catch(() => {});
-      return false;
-    }
-    return true;
+    if (shouldOpenInApp(request.url)) return true;
+    Linking.openURL(request.url).catch(() => {});
+    return false;
   }, []);
 
   useEffect(() => {
