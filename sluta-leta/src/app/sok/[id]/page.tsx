@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import ImageUploader from "@/app/components/ImageUploader";
 import { SEARCH_STATUS_LABELS, OFFER_STATUS_LABELS } from "@/lib/transactionLabels";
@@ -280,6 +281,29 @@ function SearchDetailContent() {
           </p>
         )}
       </div>
+
+      {!isOwner && !user && (
+        <div className="card flex flex-col items-center gap-2 py-8 text-center">
+          <p className="text-sm font-medium text-gray-600">Logga in för att lämna ett erbjudande.</p>
+          <div className="flex gap-2">
+            <Link href="/logga-in" className="btn-primary !px-5 !py-2 text-xs">
+              Logga in
+            </Link>
+            <Link href="/registrera" className="btn-secondary !px-5 !py-2 text-xs">
+              Skapa konto
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {!isOwner && user && search.status !== "ACTIVE" && (
+        <div className="card py-6 text-center">
+          <p className="text-sm text-gray-500">
+            Den här sökningen är inte längre aktiv ({SEARCH_STATUS_LABELS[search.status] ?? search.status}) — det går
+            inte att lämna fler erbjudanden.
+          </p>
+        </div>
+      )}
 
       {!isOwner && user && search.status === "ACTIVE" && (
         <div className="card">
