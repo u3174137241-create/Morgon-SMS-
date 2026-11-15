@@ -61,6 +61,8 @@ export default function LoginPage() {
           placeholder="E-post"
           aria-label="E-post"
           type="email"
+          name="email"
+          id="email"
           autoComplete="username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -71,6 +73,8 @@ export default function LoginPage() {
           placeholder="Lösenord"
           aria-label="Lösenord"
           type="password"
+          name="password"
+          id="password"
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

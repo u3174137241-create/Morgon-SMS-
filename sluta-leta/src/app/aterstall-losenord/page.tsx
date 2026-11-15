@@ -45,6 +45,8 @@ function ResetContent() {
         placeholder="Nytt lösenord (minst 8 tecken)"
         aria-label="Nytt lösenord, minst 8 tecken"
         type="password"
+        name="new-password"
+        id="new-password"
         autoComplete="new-password"
         minLength={8}
         value={password}

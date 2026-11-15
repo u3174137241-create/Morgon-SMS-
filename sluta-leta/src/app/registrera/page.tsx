@@ -62,6 +62,8 @@ export default function RegisterPage() {
             className="input"
             placeholder="Namn"
             aria-label="Namn"
+            name="name"
+            id="name"
             autoComplete="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -72,6 +74,8 @@ export default function RegisterPage() {
             placeholder="E-post"
             aria-label="E-post"
             type="email"
+            name="email"
+            id="email"
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -82,6 +86,8 @@ export default function RegisterPage() {
             placeholder="Lösenord (minst 8 tecken)"
             aria-label="Lösenord, minst 8 tecken"
             type="password"
+            name="new-password"
+            id="new-password"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
