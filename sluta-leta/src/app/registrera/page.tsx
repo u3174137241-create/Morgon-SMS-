@@ -25,6 +25,16 @@ export default function RegisterPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.error ?? "Något gick fel.");
+    if (typeof window !== "undefined" && "PasswordCredential" in window) {
+      try {
+        const PasswordCredentialCtor = (
+          window as unknown as { PasswordCredential: new (data: { id: string; password: string; name?: string }) => Credential }
+        ).PasswordCredential;
+        await navigator.credentials.store(new PasswordCredentialCtor({ id: email, password, name: email }));
+      } catch {
+        // Inte kritiskt om det misslyckas.
+      }
+    }
     setMessage(data.message);
     setVerifyUrl(data.verifyUrl ?? null);
   }
@@ -52,6 +62,7 @@ export default function RegisterPage() {
             className="input"
             placeholder="Namn"
             aria-label="Namn"
+            autoComplete="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -61,6 +72,7 @@ export default function RegisterPage() {
             placeholder="E-post"
             aria-label="E-post"
             type="email"
+            autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -70,6 +82,7 @@ export default function RegisterPage() {
             placeholder="Lösenord (minst 8 tecken)"
             aria-label="Lösenord, minst 8 tecken"
             type="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

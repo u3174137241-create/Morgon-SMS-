@@ -45,6 +45,7 @@ function ResetContent() {
         placeholder="Nytt lösenord (minst 8 tecken)"
         aria-label="Nytt lösenord, minst 8 tecken"
         type="password"
+        autoComplete="new-password"
         minLength={8}
         value={password}
         onChange={(e) => setPassword(e.target.value)}

@@ -31,6 +31,21 @@ export default function LoginPage() {
     // "utloggad" tills man laddar om sidan helt, trots att inloggningskakan
     // redan är satt korrekt.
     await refresh();
+    // Inloggningen går via fetch(), inte en vanlig formulärinskickning, så
+    // webbläsaren ser aldrig den signal den normalt letar efter för att
+    // erbjuda "Spara lösenord?". Credential Management API ger den signalen
+    // explicit (stöds av Chrome/Edge/Android; webbläsare utan stöd ignorerar
+    // det bara, se try/catch).
+    if (typeof window !== "undefined" && "PasswordCredential" in window) {
+      try {
+        const PasswordCredentialCtor = (
+          window as unknown as { PasswordCredential: new (data: { id: string; password: string; name?: string }) => Credential }
+        ).PasswordCredential;
+        await navigator.credentials.store(new PasswordCredentialCtor({ id: email, password, name: email }));
+      } catch {
+        // Inte kritiskt om det misslyckas.
+      }
+    }
     router.push("/");
   }
 
@@ -46,6 +61,7 @@ export default function LoginPage() {
           placeholder="E-post"
           aria-label="E-post"
           type="email"
+          autoComplete="username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -55,6 +71,7 @@ export default function LoginPage() {
           placeholder="Lösenord"
           aria-label="Lösenord"
           type="password"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
