@@ -52,7 +52,11 @@ export async function setSessionCookie(userId: string, sessionVersion: number) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
+    // Både maxAge och expires sätts explicit (inte bara maxAge) — iOS Safari
+    // har historiskt varit inkonsekvent med hur Max-Age tolkas för kakor satta
+    // via fetch()-svar snarare än en vanlig sidnavigering.
     maxAge: SESSION_TTL_MS / 1000,
+    expires: new Date(Date.now() + SESSION_TTL_MS),
   });
 }
 
