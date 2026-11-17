@@ -220,8 +220,9 @@ export default function HomePage() {
       {/* Hero-banner */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-kungsbla-700 via-kungsbla-600 to-guld-500 p-6 text-white shadow-sm">
         <div className="relative z-10 flex max-w-xs flex-col gap-3">
-          <h1 className="text-2xl font-bold leading-tight">Hitta det du söker — utan att leta.</h1>
-          <p className="text-sm text-white/85">Beskriv vad du vill köpa, så hör det av sig till dig direkt. Helt gratis.</p>
+          <h1 className="text-2xl font-bold leading-tight">
+            Sluta leta — lägg upp din annons redan idag och låt säljarna komma till dig!
+          </h1>
           <Link
             href="/sok/ny"
             className="mt-1 w-fit rounded-full bg-white px-5 py-2 text-sm font-semibold text-kungsbla-700 shadow-sm"
