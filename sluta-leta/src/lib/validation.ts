@@ -24,7 +24,7 @@ export const searchConditionSchema = z.enum(["Ny", "Begagnad", "Renoveringsobjek
 
 export const createSearchSchema = z.object({
   text: z.string().trim().min(3, "Beskriv vad du söker med minst 3 tecken.").max(2000, "Beskrivningen är för lång (max 2000 tecken)."),
-  images: z.array(z.string().url()).max(10, "Max 10 bilder.").default([]),
+  images: z.array(z.string().url()).min(1, "Minst en bild krävs.").max(10, "Max 10 bilder."),
   condition: searchConditionSchema.optional(),
   budgetMin: z.number().int().positive("Budget måste vara ett positivt tal.").max(100_000_000).optional(),
   budgetMax: z.number().int().positive("Budget måste vara ett positivt tal.").max(100_000_000).optional(),

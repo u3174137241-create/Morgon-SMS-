@@ -41,7 +41,17 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   // en gratischatt — säljaren hade då kunnat få fler än de avsedda 5. Vid en
   // skrivkonflikt gör Postgres en av transaktionerna att misslyckas; vi gör
   // då ett enda nytt försök, vilket räcker för den här typen av kollision.
-  const result = await runAcceptTransaction();
+  let result: Awaited<ReturnType<typeof attemptOnce>>;
+  try {
+    result = await runAcceptTransaction();
+  } catch (err) {
+    // Dubbelklick eller en snabb dubbel-förfrågan kan båda hinna passera
+    // kollen av offer.transaction ovan innan någon av dem har committat —
+    // då slår databasens unika-krav (offerId) till på den som kommer sist.
+    const isDuplicateOffer = err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+    if (isDuplicateOffer) return jsonError("Erbjudandet är redan godkänt.", 409);
+    throw err;
+  }
 
   async function runAcceptTransaction(attempt = 0): Promise<Awaited<ReturnType<typeof attemptOnce>>> {
     try {

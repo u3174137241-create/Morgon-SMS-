@@ -55,6 +55,7 @@ function SearchDetailContent() {
   const [offerImages, setOfferImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [acceptingOfferId, setAcceptingOfferId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -108,11 +109,19 @@ function SearchDetailContent() {
   }
 
   async function acceptOffer(offerId: string) {
+    if (acceptingOfferId) return;
     setActionMessage(null);
-    const res = await fetch(`/api/offers/${offerId}/accept`, { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) return setActionMessage(data.error);
-    router.push(`/meddelanden/${data.transaction.id}`);
+    setAcceptingOfferId(offerId);
+    try {
+      const res = await fetch(`/api/offers/${offerId}/accept`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) return setActionMessage(data.error ?? "Något gick fel.");
+      router.push(`/meddelanden/${data.transaction.id}`);
+    } catch {
+      setActionMessage("Kunde inte nå servern. Försök igen.");
+    } finally {
+      setAcceptingOfferId(null);
+    }
   }
 
   async function declineOffer(offerId: string) {
@@ -259,8 +268,12 @@ function SearchDetailContent() {
                     >
                       {offer.savedByBuyerAt ? "★ Sparad" : "☆ Spara"}
                     </button>
-                    <button className="btn-primary !px-3 !py-1.5 text-xs" onClick={() => acceptOffer(offer.id)}>
-                      Ge åtkomst
+                    <button
+                      className="btn-primary !px-3 !py-1.5 text-xs disabled:opacity-50"
+                      onClick={() => acceptOffer(offer.id)}
+                      disabled={acceptingOfferId !== null}
+                    >
+                      {acceptingOfferId === offer.id ? "Godkänner…" : "Ge åtkomst"}
                     </button>
                     <button className="btn-secondary !px-3 !py-1.5 text-xs" onClick={() => declineOffer(offer.id)}>
                       Ej aktuellt

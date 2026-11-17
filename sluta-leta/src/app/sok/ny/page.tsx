@@ -22,6 +22,10 @@ function CreateSearchForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (images.length === 0) {
+      setError("Lägg till minst en bild innan du skapar sökningen.");
+      return;
+    }
     setLoading(true);
     setError(null);
     const res = await fetch("/api/searches", {
@@ -97,12 +101,12 @@ function CreateSearchForm() {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Bilder (valfritt)</label>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Bilder (minst 1 krävs)</label>
         <ImageUploader images={images} onChange={setImages} />
-        <p className="mt-1 text-xs text-gray-400">En bild hjälper säljare förstå exakt vad du vill ha, men det går bra utan.</p>
+        <p className="mt-1 text-xs text-gray-400">En bild hjälper säljare förstå exakt vad du vill ha.</p>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button className="btn-primary w-fit" type="submit" disabled={loading}>
+      <button className="btn-primary w-fit" type="submit" disabled={loading || images.length === 0}>
         {loading ? "Skapar…" : "Skapa sökning — gratis"}
       </button>
       {!userLoading && !user && (
