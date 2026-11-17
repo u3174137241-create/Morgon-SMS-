@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import ImageUploader from "@/app/components/ImageUploader";
+import { SkeletonCard } from "@/app/components/Skeleton";
 import { SEARCH_STATUS_LABELS, OFFER_STATUS_LABELS } from "@/lib/transactionLabels";
 
 type Offer = {
@@ -44,6 +45,7 @@ function SearchDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const notifiedSellers = Number(searchParams.get("notified")) || 0;
+  const justCreated = searchParams.get("created") === "1";
   const { user } = useCurrentUser();
   const [search, setSearch] = useState<SearchDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -149,15 +151,26 @@ function SearchDetailContent() {
       </div>
     );
   }
-  if (!search) return <p className="text-sm text-gray-400">Laddar…</p>;
+  if (!search) {
+    return (
+      <div className="flex flex-col gap-4">
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
+  }
 
   const isOwner = user && user.id === search.user.id;
+  const sortedOffers = [...search.offers].sort((a, b) => a.price - b.price);
 
   return (
     <div className="flex flex-col gap-8">
-      {notifiedSellers > 0 && (
-        <p className="rounded-xl bg-guld-400/10 p-3 text-sm text-guld-600">
-          Klart! {notifiedSellers} säljare som redan har något liknande har notifierats direkt.
+      {justCreated && (
+        <p className="flex items-center gap-2 rounded-xl bg-guld-400/10 p-3 text-sm text-guld-600">
+          <span aria-hidden>✅</span>
+          {notifiedSellers > 0
+            ? `Din annons är publicerad! ${notifiedSellers} säljare som redan har något liknande har notifierats direkt.`
+            : "Din annons är publicerad! Du får en notis så fort en säljare hör av sig."}
         </p>
       )}
       <div className="card flex flex-col gap-3">
@@ -221,10 +234,13 @@ function SearchDetailContent() {
       )}
 
       <div>
-        <h2 className="mb-3 text-lg font-bold text-kungsbla-700">Erbjudanden ({search.offers.length})</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-kungsbla-700">Erbjudanden ({search.offers.length})</h2>
+          {search.offers.length > 1 && <span className="text-xs text-gray-400">Billigast överst</span>}
+        </div>
         {actionMessage && <p className="mb-3 text-sm text-red-600">{actionMessage}</p>}
         <div className="flex flex-col gap-3">
-          {search.offers.map((offer) => (
+          {sortedOffers.map((offer) => (
             <div key={offer.id} className="card flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 {offer.images[0] && <img src={offer.images[0].url} alt="" className="h-14 w-14 rounded-lg object-cover" />}
@@ -232,6 +248,9 @@ function SearchDetailContent() {
                   <div className="flex items-center gap-2 text-sm font-semibold text-kungsbla-700">
                     {offer.seller.name}
                     {offer.seller.emailVerifiedAt && <span className="badge-guld">✓</span>}
+                    {offer.status === "SENT" && (
+                      <span className="rounded-full bg-kungsbla-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">Nytt</span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500">
                     {offer.seller.ratingCount > 0

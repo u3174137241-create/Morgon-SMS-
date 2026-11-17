@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { SkeletonGrid } from "@/app/components/Skeleton";
 
 type SearchListItem = {
   id: string;
@@ -98,7 +99,7 @@ export default function ExplorePage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400">Laddar…</p>
+        <SkeletonGrid count={6} />
       ) : error ? (
         <div className="flex flex-col items-center gap-1 py-16 text-center">
           <p className="text-sm font-medium text-gray-500">Något gick fel.</p>

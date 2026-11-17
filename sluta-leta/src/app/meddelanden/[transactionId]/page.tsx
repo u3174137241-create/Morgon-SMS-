@@ -1,9 +1,11 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { TRANSACTION_STATE_LABELS } from "@/lib/transactionLabels";
+import { SkeletonCard } from "@/app/components/Skeleton";
 
 type Transaction = {
   id: string;
@@ -17,8 +19,12 @@ type Transaction = {
   conversation: { id: string } | null;
   buyer: { id: string; name: string };
   seller: { id: string; name: string };
-  offer: { message: string; price: number; search: { title: string } | null };
+  offer: { message: string; price: number; search: { id: string; title: string } | null };
 };
+
+function formatMessageTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+}
 
 type Message = {
   id: string;
@@ -43,6 +49,8 @@ function TransactionThreadContent() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSent, setReviewSent] = useState(false);
+  const [sendingImage, setSendingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadTransaction = useCallback(async () => {
     setLoadError(false);
@@ -103,6 +111,30 @@ function TransactionThreadContent() {
     }
   }
 
+  async function sendImage(file: File | undefined) {
+    if (!file) return;
+    setSendingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/uploads", { method: "POST", body: formData });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        setError(uploadData.error ?? "Kunde inte ladda upp bilden.");
+        return;
+      }
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId, type: "IMAGE", mediaUrl: uploadData.url }),
+      });
+      if (res.ok) loadMessages();
+    } finally {
+      setSendingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   async function markComplete() {
     const res = await fetch(`/api/transactions/${transactionId}/complete`, { method: "POST" });
     if (res.ok) loadTransaction();
@@ -131,7 +163,14 @@ function TransactionThreadContent() {
       </div>
     );
   }
-  if (!transaction || !user) return <p className="text-sm text-gray-400">Laddar…</p>;
+  if (!transaction || !user) {
+    return (
+      <div className="mx-auto flex max-w-lg flex-col gap-4">
+        <SkeletonCard />
+        <div className="card h-96 animate-pulse bg-gray-50" />
+      </div>
+    );
+  }
 
   const isSeller = user.id === transaction.sellerId;
   const isBuyer = user.id === transaction.buyerId;
@@ -141,15 +180,22 @@ function TransactionThreadContent() {
     <div className="mx-auto flex max-w-lg flex-col gap-4">
       <div className="card flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-kungsbla-700">
-            {isBuyer ? transaction.seller.name : transaction.buyer.name}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-kungsbla-100 text-xs font-bold text-kungsbla-600">
+              {(isBuyer ? transaction.seller.name : transaction.buyer.name).charAt(0).toUpperCase()}
+            </span>
+            <p className="text-sm font-semibold text-kungsbla-700">
+              {isBuyer ? transaction.seller.name : transaction.buyer.name}
+            </p>
+          </div>
           <span className="text-xs font-medium text-kungsbla-500">
             {TRANSACTION_STATE_LABELS[transaction.state] ?? transaction.state}
           </span>
         </div>
         {transaction.offer.search && (
-          <p className="line-clamp-1 text-xs text-gray-400">Gäller: {transaction.offer.search.title}</p>
+          <Link href={`/sok/${transaction.offer.search.id}`} className="line-clamp-1 text-xs text-gray-400 hover:underline">
+            Gäller: {transaction.offer.search.title}
+          </Link>
         )}
         <p className="text-sm font-bold text-kungsbla-600">{transaction.amount} kr</p>
       </div>
@@ -209,21 +255,50 @@ function TransactionThreadContent() {
       {transaction.conversation && (
         <div className="card flex h-96 flex-col">
           <div className="flex-1 space-y-2 overflow-y-auto">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-                  m.senderId === user.id ? "ml-auto bg-kungsbla-500 text-white" : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {m.type === "TEXT" && m.content}
-                {m.type === "IMAGE" && m.mediaUrl && <img src={m.mediaUrl} alt="" className="rounded-lg" />}
-                {m.type === "VOICE" && m.mediaUrl && <audio controls src={m.mediaUrl} className="max-w-full" />}
-              </div>
-            ))}
+            {messages.map((m) => {
+              const mine = m.senderId === user.id;
+              return (
+                <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                      mine ? "bg-kungsbla-500 text-white" : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {m.type === "TEXT" && m.content}
+                    {m.type === "IMAGE" && m.mediaUrl && <img src={m.mediaUrl} alt="" className="max-h-56 rounded-lg" />}
+                    {m.type === "VOICE" && m.mediaUrl && <audio controls src={m.mediaUrl} className="max-w-full" />}
+                  </div>
+                  <span className="mt-0.5 px-1 text-[10px] text-gray-400">{formatMessageTime(m.createdAt)}</span>
+                </div>
+              );
+            })}
             {messages.length === 0 && <p className="text-sm text-gray-400">Säg hej!</p>}
           </div>
-          <form onSubmit={sendMessage} className="mt-2 flex gap-2">
+          <form onSubmit={sendMessage} className="mt-2 flex items-center gap-2">
+            <label
+              className={`flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:border-kungsbla-400 hover:text-kungsbla-600 ${
+                sendingImage ? "opacity-50" : ""
+              }`}
+              aria-label="Skicka bild"
+            >
+              {sendingImage ? (
+                "…"
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} stroke="currentColor" className="h-5 w-5">
+                  <rect x="3" y="5" width="18" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="8.5" cy="10" r="1.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4 17 5-5 3 3 4-4 4 4" />
+                </svg>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={sendingImage}
+                onChange={(e) => sendImage(e.target.files?.[0])}
+              />
+            </label>
             <input
               className="input"
               placeholder="Skriv ett meddelande…"
@@ -231,8 +306,10 @@ function TransactionThreadContent() {
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <button className="btn-primary" type="submit">
-              Skicka
+            <button className="btn-primary !px-4" type="submit" aria-label="Skicka meddelande">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                <path d="M3.4 20.6 21 12 3.4 3.4 3 10l12 2-12 2z" />
+              </svg>
             </button>
           </form>
         </div>

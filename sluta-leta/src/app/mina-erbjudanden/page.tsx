@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { OFFER_STATUS_LABELS } from "@/lib/transactionLabels";
+import { SkeletonList } from "@/app/components/Skeleton";
 
 type MyOffer = {
   id: string;
@@ -56,7 +57,13 @@ export default function MyOffersPage() {
       </div>
     );
   }
-  if (!offers) return <p className="text-sm text-gray-400">Laddar…</p>;
+  if (!offers) {
+    return (
+      <div className="mx-auto flex max-w-lg flex-col gap-6">
+        <SkeletonList count={3} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">

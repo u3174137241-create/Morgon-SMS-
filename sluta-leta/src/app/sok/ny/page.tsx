@@ -43,7 +43,7 @@ function CreateSearchForm() {
     setLoading(false);
     if (!res.ok) return setError(data.error ?? "Något gick fel.");
     const notified = data.notifiedSellers ?? 0;
-    router.push(`/sok/${data.search.id}${notified > 0 ? `?notified=${notified}` : ""}`);
+    router.push(`/sok/${data.search.id}?created=1${notified > 0 ? `&notified=${notified}` : ""}`);
   }
 
   return (

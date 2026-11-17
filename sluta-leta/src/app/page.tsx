@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import NotificationsBell from "@/app/components/NotificationsBell";
+import { SkeletonGrid } from "@/app/components/Skeleton";
 
 type SearchListItem = {
   id: string;
@@ -143,6 +144,12 @@ export default function HomePage() {
     [searches, category, query]
   );
 
+  const myListingsWithOffers = useMemo(
+    () => (user ? searches.filter((s) => s.user.id === user.id && s.offerCount > 0) : []),
+    [searches, user]
+  );
+  const myNewOffersCount = myListingsWithOffers.reduce((sum, s) => sum + s.offerCount, 0);
+
   function toggleLiked(id: string) {
     setLikedIds((prev) => {
       const next = new Set(prev);
@@ -227,13 +234,33 @@ export default function HomePage() {
             href="/sok/ny"
             className="mt-1 w-fit rounded-full bg-white px-5 py-2 text-sm font-semibold text-kungsbla-700 shadow-sm"
           >
-            Utforska nu →
+            Skapa annons →
           </Link>
         </div>
         <div className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -bottom-10 right-10 h-24 w-24 rounded-full bg-white/10" />
       </section>
       <p className="-mt-2 text-xs text-gray-400">✓ Gratis att söka</p>
+
+      {myListingsWithOffers.length > 0 && myListingsWithOffers[0] && (
+        <Link
+          href={`/sok/${myListingsWithOffers[0].id}`}
+          className="flex items-center gap-3 rounded-2xl border border-guld-400/40 bg-guld-400/10 p-3.5 transition hover:bg-guld-400/15"
+        >
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-guld-400 text-sm font-bold text-white">
+            {myNewOffersCount}
+          </span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-kungsbla-700">
+              {myNewOffersCount === 1 ? "Du har 1 nytt erbjudande" : `Du har ${myNewOffersCount} nya erbjudanden`}
+            </p>
+            <p className="text-xs text-gray-500">
+              På {myListingsWithOffers.length === 1 ? "din annons" : `${myListingsWithOffers.length} av dina annonser`} — tryck för att se
+            </p>
+          </div>
+          <span className="text-kungsbla-600">→</span>
+        </Link>
+      )}
 
       {/* Annonser (sökningar) */}
       <section>
@@ -248,7 +275,7 @@ export default function HomePage() {
         </Link>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Laddar…</p>
+          <SkeletonGrid count={4} />
         ) : error ? (
           <div className="flex flex-col items-center gap-1 py-16 text-center">
             <p className="text-sm font-medium text-gray-500">Något gick fel.</p>

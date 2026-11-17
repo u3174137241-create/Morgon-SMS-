@@ -75,7 +75,7 @@ export default function NavBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 hidden border-b border-gray-100 bg-white/95 backdrop-blur sm:block">
+      <header className="sticky top-0 z-20 hidden border-b border-gray-100 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur sm:block">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link href="/" className="text-lg font-bold tracking-tight text-kungsbla-600">
             Sluta Leta
@@ -85,6 +85,7 @@ export default function NavBar() {
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={pathname === link.href ? "page" : undefined}
                 className={`text-sm font-medium ${pathname === link.href ? "text-kungsbla-600" : "text-gray-500 hover:text-kungsbla-500"}`}
               >
                 {link.label}
@@ -116,6 +117,7 @@ export default function NavBar() {
             <Link
               key={link.href}
               href={link.href}
+              aria-current={active ? "page" : undefined}
               className={`flex min-w-14 flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium ${
                 active ? "text-guld-600" : "text-gray-500"
               }`}
@@ -129,6 +131,7 @@ export default function NavBar() {
         })}
         <Link
           href={profileHref}
+          aria-current={profileActive ? "page" : undefined}
           className={`flex min-w-14 flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium ${
             profileActive ? "text-guld-600" : "text-gray-500"
           }`}

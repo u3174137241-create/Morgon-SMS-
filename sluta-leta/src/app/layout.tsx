@@ -12,6 +12,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#2563eb",
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -44,7 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NavBar />
           <PushNotificationGate />
           <NativeAppBridge />
-          <main className="mx-auto max-w-5xl px-4 pb-24 pt-6 sm:pb-16">{children}</main>
+          <main className="mx-auto max-w-5xl px-4 pb-24 pt-[calc(env(safe-area-inset-top)+1.5rem)] sm:pb-16 sm:pt-6">
+            {children}
+          </main>
           <footer className="hidden border-t border-gray-100 py-6 text-center text-xs text-gray-400 sm:block">
             <Link href="/villkor" className="underline">
               Användarvillkor

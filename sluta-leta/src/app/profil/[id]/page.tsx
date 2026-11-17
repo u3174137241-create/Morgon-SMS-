@@ -177,7 +177,7 @@ export default function ProfilePage() {
           </div>
           {isSelf && user?.email && <p className="text-xs text-gray-400">{user.email}</p>}
         </div>
-        <div className="mt-1 grid w-full grid-cols-3 divide-x divide-gray-100 border-t border-gray-100 pt-3">
+        <div className="mt-1 grid w-full grid-cols-2 gap-y-3 divide-x divide-gray-100 border-t border-gray-100 pt-3 sm:grid-cols-4">
           <div>
             <p className="text-lg font-bold text-kungsbla-700">{searchCount}</p>
             <p className="text-xs text-gray-400">Efterlysningar</p>
@@ -185,6 +185,10 @@ export default function ProfilePage() {
           <div>
             <p className="text-lg font-bold text-kungsbla-700">{offerCount}</p>
             <p className="text-xs text-gray-400">Erbjudanden</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-kungsbla-700">{profile.dealsCompleted}</p>
+            <p className="text-xs text-gray-400">Genomförda affärer</p>
           </div>
           <div>
             <p className="text-lg font-bold text-kungsbla-700">{profile.ratingCount > 0 ? profile.ratingAvg : "—"}</p>
@@ -196,19 +200,19 @@ export default function ProfilePage() {
       {!isSelf && user && (
         <div className="flex flex-col gap-2">
           {!reporting ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
-                className="w-fit text-xs font-medium text-gray-400 underline"
+                className="rounded-full border border-gray-200 px-3.5 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50"
                 onClick={() => setReporting(true)}
               >
-                Rapportera användare
+                🚩 Rapportera
               </button>
               <button
-                className="w-fit text-xs font-medium text-red-500 underline disabled:opacity-50"
+                className="rounded-full border border-red-200 px-3.5 py-2 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                 disabled={blockBusy}
                 onClick={() => toggleBlock(profile.id, blocks.some((b) => b.blocked.id === profile.id))}
               >
-                {blocks.some((b) => b.blocked.id === profile.id) ? "Avblockera" : "Blockera användare"}
+                {blocks.some((b) => b.blocked.id === profile.id) ? "Avblockera" : "🚫 Blockera"}
               </button>
             </div>
           ) : reportState === "sent" ? (
