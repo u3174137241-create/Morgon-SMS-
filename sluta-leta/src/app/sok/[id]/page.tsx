@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import ImageUploader from "@/app/components/ImageUploader";
@@ -181,7 +182,9 @@ function SearchDetailContent() {
         {search.images.length > 0 && (
           <div className="flex gap-2 overflow-x-auto">
             {search.images.map((img) => (
-              <img key={img.url} src={img.url} alt="" className="h-32 w-32 flex-shrink-0 rounded-xl object-cover" />
+              <div key={img.url} className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                <Image src={img.url} alt="" fill sizes="128px" className="object-cover" />
+              </div>
             ))}
           </div>
         )}
@@ -243,7 +246,11 @@ function SearchDetailContent() {
           {sortedOffers.map((offer) => (
             <div key={offer.id} className="card flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                {offer.images[0] && <img src={offer.images[0].url} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+                {offer.images[0] && (
+                  <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                    <Image src={offer.images[0].url} alt="" fill sizes="56px" className="object-cover" />
+                  </div>
+                )}
                 <div>
                   <div className="flex items-center gap-2 text-sm font-semibold text-kungsbla-700">
                     {offer.seller.name}

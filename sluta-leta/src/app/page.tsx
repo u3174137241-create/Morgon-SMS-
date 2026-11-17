@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import NotificationsBell from "@/app/components/NotificationsBell";
@@ -230,6 +231,9 @@ export default function HomePage() {
           <h1 className="text-2xl font-bold leading-tight">
             Sluta leta — lägg upp din annons redan idag och låt säljarna komma till dig!
           </h1>
+          <p className="text-sm text-white/90">
+            Beskriv vad du vill köpa — säljare som har det hör av sig till dig. Helt gratis.
+          </p>
           <Link
             href="/sok/ny"
             className="mt-1 w-fit rounded-full bg-white px-5 py-2 text-sm font-semibold text-kungsbla-700 shadow-sm"
@@ -297,7 +301,13 @@ export default function HomePage() {
               <Link key={s.id} href={`/sok/${s.id}`} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                 <div className="relative aspect-square w-full bg-gray-100">
                   {s.image ? (
-                    <img src={s.image} alt="" className="h-full w-full object-cover" />
+                    <Image
+                      src={s.image}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-kungsbla-50 to-guld-400/10 text-xs text-gray-400">
                       Ingen bild

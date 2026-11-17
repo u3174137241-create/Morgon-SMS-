@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { SkeletonGrid } from "@/app/components/Skeleton";
 
@@ -120,7 +121,11 @@ export default function ExplorePage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((s) => (
             <Link key={s.id} href={`/sok/${s.id}`} className="card flex flex-col gap-2 hover:shadow-md">
-              {s.image && <img src={s.image} alt="" className="h-36 w-full rounded-xl object-cover" />}
+              {s.image && (
+                <div className="relative h-36 w-full overflow-hidden rounded-xl bg-gray-100">
+                  <Image src={s.image} alt="" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm font-semibold text-kungsbla-700">
                 {s.user.name}
                 {s.user.verified && <span className="badge-guld">✓</span>}
