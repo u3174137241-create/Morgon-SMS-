@@ -1,34 +1,42 @@
-// Enkel in-memory rate limiter (per processinstans). Räcker för en enda server-instans;
-// vid horisontell skalning bör detta ersättas med en delad store (t.ex. Redis).
+// Databaslagrad rate limiter (delad mellan alla serverless-instanser via
+// Postgres). Ersätter en tidigare in-memory Map, som bara räknade försök mot
+// den instans som råkade hantera requesten och inte skyddade mot t.ex.
+// brute-force spritt över flera instanser.
 
-type Bucket = { count: number; resetAt: number };
+import { prisma } from "@/lib/db";
 
-const buckets = new Map<string, Bucket>();
+export async function rateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const resetAt = new Date(Date.now() + windowMs);
 
-export function rateLimit(key: string, limit: number, windowMs: number): { allowed: boolean; retryAfterMs: number } {
-  const now = Date.now();
-  const bucket = buckets.get(key);
+  // Atomär upsert: om fönstret gått ut nollställs räknaren, annars ökas den.
+  // INSERT ... ON CONFLICT är atomärt i Postgres, så två parallella requests
+  // kan inte råka förbise varandras ökning (till skillnad från en läs-ändra-
+  // skriv-sekvens i applikationskoden).
+  const rows = await prisma.$queryRaw<{ count: number; resetAt: Date }[]>`
+    INSERT INTO "RateLimitBucket" (key, count, "resetAt")
+    VALUES (${key}, 1, ${resetAt})
+    ON CONFLICT (key) DO UPDATE SET
+      count = CASE WHEN "RateLimitBucket"."resetAt" <= now() THEN 1 ELSE "RateLimitBucket".count + 1 END,
+      "resetAt" = CASE WHEN "RateLimitBucket"."resetAt" <= now() THEN ${resetAt} ELSE "RateLimitBucket"."resetAt" END
+    RETURNING count, "resetAt"
+  `;
 
-  if (!bucket || now > bucket.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, retryAfterMs: 0 };
+  const row = rows[0];
+  if (!row) return { allowed: true, retryAfterMs: 0 };
+
+  const allowed = row.count <= limit;
+
+  // Städa gamla buckets opportunistiskt (ingen bakgrundsprocess finns i serverless).
+  if (Math.random() < 0.01) {
+    prisma.$executeRaw`DELETE FROM "RateLimitBucket" WHERE "resetAt" < now() - interval '1 day'`.catch(() => {});
   }
 
-  if (bucket.count >= limit) {
-    return { allowed: false, retryAfterMs: bucket.resetAt - now };
-  }
-
-  bucket.count += 1;
-  return { allowed: true, retryAfterMs: 0 };
+  return { allowed, retryAfterMs: allowed ? 0 : row.resetAt.getTime() - Date.now() };
 }
-
-// Städa gamla buckets då och då så minnet inte växer obegränsat.
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, bucket] of buckets) {
-    if (now > bucket.resetAt) buckets.delete(key);
-  }
-}, 5 * 60 * 1000).unref?.();
 
 export function clientKeyFromRequest(req: Request, extra = ""): string {
   const ip =

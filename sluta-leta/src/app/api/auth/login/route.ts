@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return jsonError("Ogiltig indata.", 400);
   const { email, password } = parsed.data;
 
-  const { allowed, retryAfterMs } = rateLimit(clientKeyFromRequest(req, `login:${email}`), 8, 15 * 60 * 1000);
+  const { allowed, retryAfterMs } = await rateLimit(clientKeyFromRequest(req, `login:${email}`), 8, 15 * 60 * 1000);
   if (!allowed) {
     return jsonError(`För många inloggningsförsök. Försök igen om ${Math.ceil(retryAfterMs / 60000)} min.`, 429);
   }

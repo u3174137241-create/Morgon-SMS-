@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return jsonError("Du måste vara inloggad.", 401);
 
-  const { allowed } = rateLimit(clientKeyFromRequest(req, `report:${user.id}`), 10, 60 * 60 * 1000);
+  const { allowed } = await rateLimit(clientKeyFromRequest(req, `report:${user.id}`), 10, 60 * 60 * 1000);
   if (!allowed) return jsonError("För många rapporter. Försök igen senare.", 429);
 
   const body = await req.json().catch(() => null);

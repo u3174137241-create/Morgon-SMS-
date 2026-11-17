@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return jsonError("Du måste vara inloggad.", 401);
 
-  const { allowed } = rateLimit(clientKeyFromRequest(req, `upload:${user.id}`), 40, 60 * 60 * 1000);
+  const { allowed } = await rateLimit(clientKeyFromRequest(req, `upload:${user.id}`), 40, 60 * 60 * 1000);
   if (!allowed) return jsonError("För många uppladdningar. Försök igen senare.", 429);
 
   const formData = await req.formData().catch(() => null);

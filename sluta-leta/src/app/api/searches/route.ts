@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   if (!user) return jsonError("Du måste vara inloggad.", 401);
   if (!user.emailVerifiedAt) return jsonError("Bekräfta din e-postadress innan du kan skapa en sökning.", 403);
 
-  const { allowed } = rateLimit(clientKeyFromRequest(req, `create-search:${user.id}`), 20, 60 * 60 * 1000);
+  const { allowed } = await rateLimit(clientKeyFromRequest(req, `create-search:${user.id}`), 20, 60 * 60 * 1000);
   if (!allowed) return jsonError("För många sökningar skapade. Försök igen senare.", 429);
 
   const body = await req.json().catch(() => null);

@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return jsonError("Du måste vara inloggad.", 401);
 
-  const { allowed } = rateLimit(clientKeyFromRequest(req, `send-message:${user.id}`), 60, 60 * 1000);
+  const { allowed } = await rateLimit(clientKeyFromRequest(req, `send-message:${user.id}`), 60, 60 * 1000);
   if (!allowed) return jsonError("Skickar för snabbt, vänta lite.", 429);
 
   const body = await req.json().catch(() => null);

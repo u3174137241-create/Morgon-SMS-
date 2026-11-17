@@ -6,7 +6,7 @@ import { confirmPasswordResetSchema } from "@/lib/validation";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
-  const { allowed } = rateLimit(clientKeyFromRequest(req, "reset-confirm"), 20, 15 * 60 * 1000);
+  const { allowed } = await rateLimit(clientKeyFromRequest(req, "reset-confirm"), 20, 15 * 60 * 1000);
   if (!allowed) return jsonError("För många försök. Försök igen senare.", 429);
 
   const body = await req.json().catch(() => null);

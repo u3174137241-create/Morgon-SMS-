@@ -540,3 +540,14 @@ model AnalyticsEvent {
 
   @@index([type, createdAt])
 }
+
+// Delad, databaslagrad rate limit-bucket. Ersätter en tidigare in-memory Map,
+// som bara räknade försök mot den serverless-instans som råkade hantera
+// requesten och inte skyddade mot t.ex. brute-force över flera instanser.
+model RateLimitBucket {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
+}
