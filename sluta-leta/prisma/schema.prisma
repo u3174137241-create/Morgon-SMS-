@@ -303,10 +303,19 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
+// Vilket system som äger prenumerationen. Avgör hur "Hantera prenumeration"
+// ska bete sig (Stripes kundportal vs. Apples/Googles egna abonnemangssida)
+// — en Apple-köpt prenumeration kan aldrig hanteras via Stripe, och tvärtom.
+enum SubscriptionSource {
+  STRIPE
+  APPLE
+}
+
 model Subscription {
   id                   String             @id @default(cuid())
   userId               String             @unique
   user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source               SubscriptionSource @default(STRIPE)
   stripeSubscriptionId String?            @unique
   stripeCustomerId     String?
   status               SubscriptionStatus @default(CREATED)

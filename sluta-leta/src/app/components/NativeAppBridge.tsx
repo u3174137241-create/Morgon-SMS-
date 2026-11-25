@@ -3,12 +3,27 @@
 import { useEffect } from "react";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 
+declare global {
+  interface Window {
+    ReactNativeWebView?: { postMessage: (data: string) => void };
+  }
+}
+
 // Tar emot meddelanden från den native iOS/Android-appens WebView-skal (se
-// mobile/App.tsx) — i praktiken bara ett Expo-pushtoken att registrera mot
-// det inloggade kontot. Gör ingenting i en vanlig webbläsare, eftersom
-// react-native-webview aldrig postar några meddelanden där.
+// mobile/App.tsx) — Expo-pushtoken att registrera mot det inloggade kontot.
+// Gör ingenting i en vanlig webbläsare, eftersom react-native-webview aldrig
+// postar några meddelanden där.
 export default function NativeAppBridge() {
   const { user } = useCurrentUser();
+
+  // Skickar in vilken användare som är inloggad till appen, så den kan koppla
+  // RevenueCat (Apples/Googles in-app-köp) till samma konto via
+  // Purchases.logIn — annars skulle ett köp inte gå att koppla till rätt
+  // användare i vår egen databas när RevenueCats webhook kommer in.
+  useEffect(() => {
+    if (!window.ReactNativeWebView) return;
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: "current-user", userId: user?.id ?? null }));
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;

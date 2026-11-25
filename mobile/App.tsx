@@ -4,7 +4,8 @@ import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
-import { WebView, type WebViewNavigation } from "react-native-webview";
+import { WebView, type WebViewNavigation, type WebViewMessageEvent } from "react-native-webview";
+import Purchases from "react-native-purchases";
 
 const APP_URL = "https://sluta-leta-three.vercel.app";
 const APP_HOSTNAME = new URL(APP_URL).hostname;
@@ -62,17 +63,32 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
   }
 }
 
+// RevenueCat-nycklarna finns bara om ägaren har satt upp ett RevenueCat-konto
+// kopplat till App Store Connect — innan det finns är Plus-köp i appen helt
+// avstängt (samma gracefulla nedtoning som push-notiser utan EAS-projekt).
+function getRevenueCatApiKey(): string | null {
+  const keys = Constants.expoConfig?.extra?.revenueCat as { iosApiKey?: string; androidApiKey?: string } | undefined;
+  const key = Platform.OS === "ios" ? keys?.iosApiKey : keys?.androidApiKey;
+  return key && key.length > 0 ? key : null;
+}
+
 export default function App() {
   const webviewRef = useRef<WebView<object>>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [loading, setLoading] = useState(true);
   const pushTokenRef = useRef<string | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
+  const purchasesConfiguredRef = useRef(false);
 
   // Skicka pushtokenet in i webbsidan via postMessage, så sidan (se
   // NativeAppBridge.tsx i sluta-leta-appen) kan POSTa det till backend med
   // sina egna cookies — appen behöver aldrig hantera inloggningssessionen.
   const sendTokenToWebView = useCallback((token: string) => {
     webviewRef.current?.postMessage(JSON.stringify({ type: "expo-push-token", token }));
+  }, []);
+
+  const postToWebView = useCallback((message: object) => {
+    webviewRef.current?.postMessage(JSON.stringify(message));
   }, []);
 
   useEffect(() => {
@@ -82,6 +98,60 @@ export default function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    const apiKey = getRevenueCatApiKey();
+    if (!apiKey) return;
+    Purchases.configure({ apiKey });
+    purchasesConfiguredRef.current = true;
+  }, []);
+
+  // Köp av Plus görs alltid via native in-app-köp (RevenueCat), aldrig via
+  // webbsidans Stripe-flöde — se src/app/plus/page.tsx. appUserID sätts till
+  // vårt eget inloggade user-id (se "current-user"-meddelandet nedan) så att
+  // RevenueCats webhook kan koppla köpet till rätt konto i vår databas.
+  const handlePlusPurchaseRequest = useCallback(async () => {
+    if (!purchasesConfiguredRef.current) {
+      postToWebView({ type: "plus-purchase-failed" });
+      return;
+    }
+    try {
+      const offerings = await Purchases.getOfferings();
+      const pkg = offerings.current?.availablePackages[0];
+      if (!pkg) {
+        postToWebView({ type: "plus-purchase-failed" });
+        return;
+      }
+      await Purchases.purchasePackage(pkg);
+      postToWebView({ type: "plus-purchase-completed" });
+    } catch (err) {
+      const purchaseError = err as { userCancelled?: boolean };
+      postToWebView({ type: purchaseError.userCancelled ? "plus-purchase-cancelled" : "plus-purchase-failed" });
+    }
+  }, [postToWebView]);
+
+  const handleWebViewMessage = useCallback(
+    (e: WebViewMessageEvent) => {
+      let parsed: { type?: string; userId?: string | null } | null = null;
+      try {
+        parsed = JSON.parse(e.nativeEvent.data);
+      } catch {
+        return;
+      }
+      if (parsed?.type === "current-user") {
+        const userId = parsed.userId ?? null;
+        if (userId && userId !== currentUserIdRef.current && purchasesConfiguredRef.current) {
+          currentUserIdRef.current = userId;
+          Purchases.logIn(userId).catch(() => {});
+        } else if (!userId) {
+          currentUserIdRef.current = null;
+        }
+      } else if (parsed?.type === "request-plus-purchase") {
+        handlePlusPurchaseRequest();
+      }
+    },
+    [handlePlusPurchaseRequest]
+  );
 
   const handleShouldStartLoadWithRequest = useCallback((request: WebViewNavigation) => {
     if (shouldOpenInApp(request.url)) return true;
@@ -110,6 +180,7 @@ export default function App() {
         style={styles.webview}
         onNavigationStateChange={(nav: { canGoBack: boolean }) => setCanGoBack(nav.canGoBack)}
         onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+        onMessage={handleWebViewMessage}
         onLoadEnd={() => {
           setLoading(false);
           if (pushTokenRef.current) sendTokenToWebView(pushTokenRef.current);

@@ -9,6 +9,7 @@ type Subscription = {
   status: string;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  source: "STRIPE" | "APPLE";
 } | null;
 
 function PlusPageContent() {
@@ -23,6 +24,11 @@ function PlusPageContent() {
   const [needsLogin, setNeedsLogin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isNativeApp, setIsNativeApp] = useState(false);
+
+  useEffect(() => {
+    setIsNativeApp(typeof window !== "undefined" && Boolean(window.ReactNativeWebView));
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -53,8 +59,50 @@ function PlusPageContent() {
     load();
   }, [load]);
 
+  // Inne i appen görs köpet via native in-app-köp (RevenueCat), aldrig via
+  // Stripe — Apple/Google tillåter inte ett eget betalflöde för en
+  // prenumeration som låser upp funktioner i appen. Appens skal (mobile/App.tsx)
+  // sköter själva köpet och postar tillbaka resultatet hit.
+  useEffect(() => {
+    if (!isNativeApp) return;
+
+    function handleMessage(event: MessageEvent | Event) {
+      const origin = (event as MessageEvent).origin;
+      if (origin && origin !== window.location.origin) return;
+      const data = (event as MessageEvent).data;
+      if (typeof data !== "string") return;
+      let parsed: { type?: string } | null = null;
+      try {
+        parsed = JSON.parse(data);
+      } catch {
+        return;
+      }
+      if (parsed?.type === "plus-purchase-completed") {
+        setSubmitting(false);
+        load();
+      } else if (parsed?.type === "plus-purchase-failed") {
+        setSubmitting(false);
+        setError("Köpet gick inte igenom. Försök igen.");
+      } else if (parsed?.type === "plus-purchase-cancelled") {
+        setSubmitting(false);
+      }
+    }
+
+    window.addEventListener("message", handleMessage);
+    document.addEventListener("message", handleMessage as EventListener);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      document.removeEventListener("message", handleMessage as EventListener);
+    };
+  }, [isNativeApp, load]);
+
   async function subscribe() {
     setError(null);
+    if (isNativeApp) {
+      setSubmitting(true);
+      window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "request-plus-purchase" }));
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/subscriptions/checkout", { method: "POST" });
@@ -70,6 +118,12 @@ function PlusPageContent() {
 
   async function manage() {
     setError(null);
+    // Ett Apple-köpt abonnemang kan bara avslutas via Apples egna sida —
+    // vår Stripe-kundportal har ingen koppling till det köpet alls.
+    if (subscription?.source === "APPLE") {
+      window.location.href = "itms-apps://apps.apple.com/account/subscriptions";
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/subscriptions/portal", { method: "POST" });
@@ -127,7 +181,7 @@ function PlusPageContent() {
             Försök igen
           </button>
         </div>
-      ) : !stripeConfigured ? (
+      ) : !stripeConfigured && !isNativeApp ? (
         <p className="text-sm text-gray-400">Betalningar är inte konfigurerade ännu.</p>
       ) : isActive ? (
         <div className="flex flex-col gap-2">
@@ -138,6 +192,9 @@ function PlusPageContent() {
                 ? `Avslutas ${new Date(subscription.currentPeriodEnd).toLocaleDateString("sv-SE")} — du har tillgång till Plus fram till då.`
                 : `Nästa debitering: ${new Date(subscription.currentPeriodEnd).toLocaleDateString("sv-SE")}.`}
             </p>
+          )}
+          {subscription?.source === "APPLE" && (
+            <p className="text-xs text-gray-400">Köpt via App Store — hanteras under Inställningar → ditt namn → Prenumerationer.</p>
           )}
           <button className="btn-secondary w-fit self-center disabled:opacity-50" onClick={manage} disabled={submitting}>
             {submitting ? "Öppnar…" : "Hantera prenumeration"}

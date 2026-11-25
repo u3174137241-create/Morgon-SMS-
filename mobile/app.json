@@ -40,6 +40,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "revenueCat": {
+        "iosApiKey": "",
+        "androidApiKey": ""
+      }
     }
   }
 }
